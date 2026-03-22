@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jiawei Lu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #FAF8F3;
+      --dark: #1C1C1E;
+      --mid: #5A5A5A;
+      --light: #AFAFAF;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--cream);
+      color: var(--dark);
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.4rem 3rem;
+      mix-blend-mode: multiply;
+    }
+
+    .nav-logo {
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-logo img {
+      height: 36px;
+      width: 36px;
+      object-fit: contain;
+    }
+
+    .nav-logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      color: var(--dark);
+    }
+
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a {
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--dark); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--light);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3.5rem, 10vw, 8rem);
+      font-weight: 300;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      color: var(--dark);
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-name em {
+      font-style: italic;
+      font-weight: 300;
+    }
+
+    .hero-tagline {
+      font-size: 0.85rem;
+      line-height: 1.8;
+      color: var(--mid);
+      max-width: 420px;
+      font-weight: 300;
+      margin-bottom: 4rem;
+    }
+
+    .scroll-hint {
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--light), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.2); }
+    }
+
+    /* ── CARDS ── */
+    .cards-section {
+      padding: 4rem 3rem 8rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 3/4;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+    }
+
+    .card-bg {
+      position: absolute;
+      inset: 0;
+      transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .card:hover .card-bg { transform: scale(1.04); }
+
+    /* CV card */
+    .card-cv .card-bg {
+      background: linear-gradient(160deg, #E8ECF2 0%, #CDD4E0 100%);
+    }
+
+    /* Flowers card */
+    .card-flowers .card-bg {
+      background: linear-gradient(160deg, #F2EDE8 0%, #E8D5C8 50%, #D4C9BB 100%);
+    }
+
+    /* Chat card */
+    .card-chat .card-bg {
+      background: linear-gradient(160deg, #EDE8F2 0%, #DDD0E8 50%, #C9C0DB 100%);
+    }
+
+    .card-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 2.5rem;
+    }
+
+    .card-number {
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      color: rgba(0,0,0,0.35);
+      margin-bottom: 0.6rem;
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 400;
+      color: #1C1C1E;
+      line-height: 1.1;
+      margin-bottom: 0.6rem;
+    }
+
+    .card-desc {
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      color: rgba(0,0,0,0.45);
+      line-height: 1.6;
+    }
+
+    .card-arrow {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s, transform 0.3s;
+      color: var(--dark);
+      font-size: 0.9rem;
+    }
+
+    .card:hover .card-arrow {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Decorative tag */
+    .card-tag {
+      position: absolute;
+      top: 2rem;
+      left: 2.5rem;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.3);
+      border: 1px solid rgba(0,0,0,0.15);
+      padding: 0.25rem 0.6rem;
+      border-radius: 2rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 3rem;
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      color: var(--light);
+      text-transform: uppercase;
+    }
+
+    footer a {
+      color: var(--light);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    footer a:hover { color: var(--mid); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 1.2rem 1.5rem; }
+      .cards-section { padding: 2rem 1rem 5rem; gap: 1px; }
+      .card { aspect-ratio: 4/3; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <img src="logo.png" alt="Jiawei Lu" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+      <span class="nav-logo-text" style="display:none;">Way</span>
+    </a>
+    <div class="nav-links">
+      <a href="cv.html">CV</a>
+      <a href="flowers.html">Flowers</a>
+      <a href="chat.html">Chat</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <p class="hero-eyebrow">Portfolio · 2025</p>
+    <h1 class="hero-name">Jiawei<br /><em>Lu</em></h1>
+    <p class="hero-tagline">
+      Building at the intersection of data &amp; AI.<br />
+      MS Statistics @ Columbia · Ex-Stepfun, Red Note.<br />
+      Also: amateur florist.
+    </p>
+    <div class="scroll-hint">
+      <div class="scroll-line"></div>
+      <span>Explore</span>
+    </div>
+  </section>
+
+  <div class="cards-section">
+
+    <a href="cv.html" class="card card-cv">
+      <div class="card-bg"></div>
+      <div class="card-tag">Work &amp; Study</div>
+      <div class="card-arrow">↗</div>
+      <div class="card-content">
+        <p class="card-number">01</p>
+        <h2 class="card-title">CV &amp;<br />Experience</h2>
+        <p class="card-desc">Data · AI · ML Engineering</p>
+      </div>
+    </a>
+
+    <a href="flowers.html" class="card card-flowers">
+      <div class="card-bg"></div>
+      <div class="card-tag">Personal</div>
+      <div class="card-arrow">↗</div>
+      <div class="card-content">
+        <p class="card-number">02</p>
+        <h2 class="card-title">In<br />Bloom</h2>
+        <p class="card-desc">Floral art &amp; arrangements</p>
+      </div>
+    </a>
+
+    <a href="chat.html" class="card card-chat">
+      <div class="card-bg"></div>
+      <div class="card-tag">Coming Soon</div>
+      <div class="card-arrow">↗</div>
+      <div class="card-content">
+        <p class="card-number">03</p>
+        <h2 class="card-title">Chat<br />with Me</h2>
+        <p class="card-desc">An AI Jiawei · under construction</p>
+      </div>
+    </a>
+
+  </div>
+
+  <footer>
+    <p>
+      <a href="mailto:fayette0302@gmail.com">fayette0302@gmail.com</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/vivian0220" target="_blank">GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://linkedin.com/in/jiawei-lu-vivian0220" target="_blank">LinkedIn</a>
+    </p>
+  </footer>
+
+</body>
+</html>

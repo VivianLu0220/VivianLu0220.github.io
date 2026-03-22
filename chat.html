@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat with Me — Jiawei Lu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #FFF5FB;
+      --surface: #FFFFFF;
+      --pink: #FF85A1;
+      --pink-light: #FFD6E7;
+      --pink-deep: #E05C7A;
+      --lavender: #C8B4E8;
+      --lavender-light: #EDE6F8;
+      --mint: #A8DDD4;
+      --yellow: #FFE8A3;
+      --text: #4A3050;
+      --text-soft: #8A6A8A;
+      --border: #F0D8E8;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,245,251,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 3rem;
+    }
+
+    .nav-logo { display:flex; align-items:center; }
+    .nav-logo img { height:36px; width:36px; object-fit:contain; }
+    .nav-logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-style: italic;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-links { display: flex; gap: 1.8rem; }
+    .nav-links a {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--pink); }
+    .nav-links a.active { color: var(--pink); }
+
+    /* ── MAIN ── */
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    /* ── FLOATING BUBBLES ── */
+    .bubbles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.18;
+      animation: floatUp linear infinite;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) scale(0.8); opacity: 0; }
+      10% { opacity: 0.18; }
+      90% { opacity: 0.18; }
+      100% { transform: translateY(-20vh) scale(1.1); opacity: 0; }
+    }
+
+    .b1 { width: 80px; height: 80px; background: var(--pink-light); left: 10%; animation-duration: 12s; animation-delay: 0s; }
+    .b2 { width: 50px; height: 50px; background: var(--lavender); left: 25%; animation-duration: 15s; animation-delay: 2s; }
+    .b3 { width: 100px; height: 100px; background: var(--mint); left: 50%; animation-duration: 18s; animation-delay: 4s; }
+    .b4 { width: 60px; height: 60px; background: var(--yellow); left: 75%; animation-duration: 13s; animation-delay: 1s; }
+    .b5 { width: 40px; height: 40px; background: var(--pink-light); left: 88%; animation-duration: 16s; animation-delay: 6s; }
+    .b6 { width: 70px; height: 70px; background: var(--lavender-light); left: 5%; animation-duration: 20s; animation-delay: 8s; }
+
+    /* ── CARD ── */
+    .card {
+      position: relative;
+      z-index: 1;
+      background: white;
+      border-radius: 24px;
+      padding: 3.5rem 3rem;
+      max-width: 520px;
+      width: 100%;
+      box-shadow:
+        0 4px 24px rgba(255, 133, 161, 0.12),
+        0 1px 4px rgba(0,0,0,0.04);
+      border: 1px solid var(--border);
+    }
+
+    /* Cute emoji art */
+    .emoji-art {
+      font-size: 3.5rem;
+      margin-bottom: 1.5rem;
+      display: block;
+      animation: wobble 3s ease-in-out infinite;
+    }
+
+    @keyframes wobble {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+
+    .card-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+      line-height: 1.2;
+    }
+
+    .card-title span {
+      background: linear-gradient(135deg, var(--pink) 0%, var(--lavender) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .card-subtitle {
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: var(--text-soft);
+      margin-bottom: 2.5rem;
+      line-height: 1.7;
+    }
+
+    /* ── CONSTRUCTION STATUS ── */
+    .status-block {
+      background: var(--lavender-light);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .status-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--lavender);
+      margin-bottom: 0.8rem;
+    }
+
+    .progress-bar-wrap {
+      background: rgba(200,180,232,0.3);
+      border-radius: 8px;
+      height: 8px;
+      overflow: hidden;
+      margin-bottom: 0.6rem;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 25%;
+      background: linear-gradient(90deg, var(--lavender) 0%, var(--pink) 100%);
+      border-radius: 8px;
+      animation: shimmer 2s ease-in-out infinite;
+      background-size: 200% 100%;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .progress-text {
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      font-weight: 400;
+    }
+
+    /* ── STEPS ── */
+    .steps {
+      text-align: left;
+      margin-bottom: 2rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .step:last-child { border-bottom: none; }
+
+    .step-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .step.done .step-icon::after { content: ' ✓'; font-size: 0.7rem; color: #A8DDD4; }
+
+    .step-text { line-height: 1.5; }
+    .step-text strong { font-weight: 600; }
+
+    .step.todo { opacity: 0.5; }
+
+    /* ── NOTIFY CTA ── */
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      color: white;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 0.9rem 2rem;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(255,133,161,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(255,133,161,0.4);
+    }
+
+    .cta-note {
+      margin-top: 1rem;
+      font-size: 0.68rem;
+      color: var(--text-soft);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      color: var(--border);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.2rem; }
+      .card { padding: 2.5rem 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo"><img src="logo.png" alt="Jiawei Lu" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" /><span class="nav-logo-text" style="display:none;">Way</span></a>
+    <div class="nav-links">
+      <a href="cv.html">CV</a>
+      <a href="flowers.html">Flowers</a>
+      <a href="chat.html" class="active">Chat</a>
+    </div>
+  </nav>
+
+  <!-- Floating background bubbles -->
+  <div class="bubbles" aria-hidden="true">
+    <div class="bubble b1"></div>
+    <div class="bubble b2"></div>
+    <div class="bubble b3"></div>
+    <div class="bubble b4"></div>
+    <div class="bubble b5"></div>
+    <div class="bubble b6"></div>
+  </div>
+
+  <main>
+    <div class="card">
+
+      <span class="emoji-art">🌸</span>
+
+      <h1 class="card-title">Chat with <span>Jiawei</span></h1>
+      <p class="card-subtitle">
+        一个用我的聊天记录训练出来的 AI 小 Jiawei。<br />
+        目前还在努力学习成为我中……
+      </p>
+
+      <!-- Progress -->
+      <div class="status-block">
+        <p class="status-label">🔧 Building in progress</p>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill"></div>
+        </div>
+        <p class="progress-text">约 25% 完成 · 她还在长大中 🌱</p>
+      </div>
+
+      <!-- Steps -->
+      <div class="steps">
+
+        <div class="step done">
+          <span class="step-icon">✅</span>
+          <span class="step-text"><strong>收集聊天记录</strong> — 素材已就位</span>
+        </div>
+
+        <div class="step todo">
+          <span class="step-icon">⏳</span>
+          <span class="step-text"><strong>数据清洗 &amp; 格式化</strong> — 让数据变整洁</span>
+        </div>
+
+        <div class="step todo">
+          <span class="step-icon">⏳</span>
+          <span class="step-text"><strong>Fine-tune 或 RAG 接入</strong> — 训练一个像我的 LLM</span>
+        </div>
+
+        <div class="step todo">
+          <span class="step-icon">⏳</span>
+          <span class="step-text"><strong>接入前端对话界面</strong> — 让你真的可以找我聊天</span>
+        </div>
+
+      </div>
+
+      <a href="mailto:fayette0302@gmail.com" class="cta">
+        📬 &nbsp;来找我聊聊
+      </a>
+      <p class="cta-note">在 AI Jiawei 上线前，可以直接给我发邮件！</p>
+
+    </div>
+  </main>
+
+  <footer>✿ Jiawei Lu · 2025</footer>
+
+</body>
+</html>
