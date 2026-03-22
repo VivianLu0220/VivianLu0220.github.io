@@ -10,18 +10,18 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #FFF5FB;
+      --bg: #F0F6FF;
       --surface: #FFFFFF;
-      --pink: #FF85A1;
-      --pink-light: #FFD6E7;
-      --pink-deep: #E05C7A;
-      --lavender: #C8B4E8;
-      --lavender-light: #EDE6F8;
-      --mint: #A8DDD4;
-      --yellow: #FFE8A3;
-      --text: #4A3050;
-      --text-soft: #8A6A8A;
-      --border: #F0D8E8;
+      --blue: #4A90D9;
+      --blue-light: #D0E2F7;
+      --blue-deep: #2B6CB0;
+      --slate: #6B8DB5;
+      --slate-light: #E8F0FA;
+      --teal: #5BA4B5;
+      --sky: #A3D4E8;
+      --text: #1E3A5F;
+      --text-soft: #5A7A9A;
+      --border: #D0DEF0;
     }
 
     html { scroll-behavior: smooth; }
@@ -39,7 +39,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(255,245,251,0.92);
+      background: rgba(240,246,255,0.92);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -69,8 +69,8 @@
       text-decoration: none;
       transition: color 0.2s;
     }
-    .nav-links a:hover { color: var(--pink); }
-    .nav-links a.active { color: var(--pink); }
+    .nav-links a:hover { color: var(--blue); }
+    .nav-links a.active { color: var(--blue); }
 
     /* ── MAIN ── */
     main {
@@ -106,12 +106,12 @@
       100% { transform: translateY(-20vh) scale(1.1); opacity: 0; }
     }
 
-    .b1 { width: 80px; height: 80px; background: var(--pink-light); left: 10%; animation-duration: 12s; animation-delay: 0s; }
-    .b2 { width: 50px; height: 50px; background: var(--lavender); left: 25%; animation-duration: 15s; animation-delay: 2s; }
-    .b3 { width: 100px; height: 100px; background: var(--mint); left: 50%; animation-duration: 18s; animation-delay: 4s; }
-    .b4 { width: 60px; height: 60px; background: var(--yellow); left: 75%; animation-duration: 13s; animation-delay: 1s; }
-    .b5 { width: 40px; height: 40px; background: var(--pink-light); left: 88%; animation-duration: 16s; animation-delay: 6s; }
-    .b6 { width: 70px; height: 70px; background: var(--lavender-light); left: 5%; animation-duration: 20s; animation-delay: 8s; }
+    .b1 { width: 80px; height: 80px; background: var(--blue-light); left: 10%; animation-duration: 12s; animation-delay: 0s; }
+    .b2 { width: 50px; height: 50px; background: var(--slate); left: 25%; animation-duration: 15s; animation-delay: 2s; }
+    .b3 { width: 100px; height: 100px; background: var(--teal); left: 50%; animation-duration: 18s; animation-delay: 4s; }
+    .b4 { width: 60px; height: 60px; background: var(--sky); left: 75%; animation-duration: 13s; animation-delay: 1s; }
+    .b5 { width: 40px; height: 40px; background: var(--blue-light); left: 88%; animation-duration: 16s; animation-delay: 6s; }
+    .b6 { width: 70px; height: 70px; background: var(--slate-light); left: 5%; animation-duration: 20s; animation-delay: 8s; }
 
     /* ── CARD ── */
     .card {
@@ -123,7 +123,7 @@
       max-width: 520px;
       width: 100%;
       box-shadow:
-        0 4px 24px rgba(255, 133, 161, 0.12),
+        0 4px 24px rgba(74, 144, 217, 0.12),
         0 1px 4px rgba(0,0,0,0.04);
       border: 1px solid var(--border);
     }
@@ -150,7 +150,7 @@
     }
 
     .card-title span {
-      background: linear-gradient(135deg, var(--pink) 0%, var(--lavender) 100%);
+      background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -166,7 +166,7 @@
 
     /* ── CONSTRUCTION STATUS ── */
     .status-block {
-      background: var(--lavender-light);
+      background: var(--slate-light);
       border-radius: 16px;
       padding: 1.5rem;
       margin-bottom: 2rem;
@@ -177,12 +177,12 @@
       font-weight: 700;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--lavender);
+      color: var(--slate);
       margin-bottom: 0.8rem;
     }
 
     .progress-bar-wrap {
-      background: rgba(200,180,232,0.3);
+      background: rgba(74,144,217,0.2);
       border-radius: 8px;
       height: 8px;
       overflow: hidden;
@@ -192,7 +192,7 @@
     .progress-bar-fill {
       height: 100%;
       width: 25%;
-      background: linear-gradient(90deg, var(--lavender) 0%, var(--pink) 100%);
+      background: linear-gradient(90deg, var(--blue) 0%, var(--teal) 100%);
       border-radius: 8px;
       animation: shimmer 2s ease-in-out infinite;
       background-size: 200% 100%;
@@ -234,7 +234,7 @@
       margin-top: 0.1rem;
     }
 
-    .step.done .step-icon::after { content: ' ✓'; font-size: 0.7rem; color: #A8DDD4; }
+    .step.done .step-icon::after { content: ' ✓'; font-size: 0.7rem; color: var(--teal); }
 
     .step-text { line-height: 1.5; }
     .step-text strong { font-weight: 600; }
@@ -246,7 +246,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-deep) 100%);
       color: white;
       font-size: 0.82rem;
       font-weight: 700;
@@ -254,13 +254,13 @@
       padding: 0.9rem 2rem;
       border-radius: 50px;
       text-decoration: none;
-      box-shadow: 0 4px 16px rgba(255,133,161,0.35);
+      box-shadow: 0 4px 16px rgba(43,108,176,0.35);
       transition: transform 0.2s, box-shadow 0.2s;
     }
 
     .cta:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(255,133,161,0.4);
+      box-shadow: 0 8px 24px rgba(43,108,176,0.4);
     }
 
     .cta-note {
@@ -311,12 +311,12 @@
   <main>
     <div class="card">
 
-      <span class="emoji-art">🌸</span>
+      <span class="emoji-art">🌊</span>
 
       <h1 class="card-title">Chat with <span>Jiawei</span></h1>
       <p class="card-subtitle">
-        一个用我的聊天记录训练出来的 AI 小 Jiawei。<br />
-        目前还在努力学习成为我中……
+        基于个人对话数据训练的 chatbot，目前仍在开发中。<br />
+        完成后可在此页面直接对话。
       </p>
 
       <!-- Progress -->
@@ -325,7 +325,7 @@
         <div class="progress-bar-wrap">
           <div class="progress-bar-fill"></div>
         </div>
-        <p class="progress-text">约 25% 完成 · 她还在长大中 🌱</p>
+        <p class="progress-text">~25% complete · data pipeline in progress</p>
       </div>
 
       <!-- Steps -->
@@ -333,35 +333,35 @@
 
         <div class="step done">
           <span class="step-icon">✅</span>
-          <span class="step-text"><strong>收集聊天记录</strong> — 素材已就位</span>
+          <span class="step-text"><strong>数据收集</strong> — 对话语料已导出</span>
         </div>
 
         <div class="step todo">
           <span class="step-icon">⏳</span>
-          <span class="step-text"><strong>数据清洗 &amp; 格式化</strong> — 让数据变整洁</span>
+          <span class="step-text"><strong>数据清洗 &amp; 格式化</strong> — 预处理 pipeline 搭建中</span>
         </div>
 
         <div class="step todo">
           <span class="step-icon">⏳</span>
-          <span class="step-text"><strong>Fine-tune 或 RAG 接入</strong> — 训练一个像我的 LLM</span>
+          <span class="step-text"><strong>模型训练</strong> — Fine-tune / RAG 方案评估与接入</span>
         </div>
 
         <div class="step todo">
           <span class="step-icon">⏳</span>
-          <span class="step-text"><strong>接入前端对话界面</strong> — 让你真的可以找我聊天</span>
+          <span class="step-text"><strong>前端对话界面</strong> — 接入 chat UI，部署上线</span>
         </div>
 
       </div>
 
       <a href="mailto:fayette0302@gmail.com" class="cta">
-        📬 &nbsp;来找我聊聊
+        📬 &nbsp;Get in Touch
       </a>
-      <p class="cta-note">在 AI Jiawei 上线前，可以直接给我发邮件！</p>
+      <p class="cta-note">Chatbot 上线前，欢迎通过邮件联系我。</p>
 
     </div>
   </main>
 
-  <footer>✿ Jiawei Lu · 2025</footer>
+  <footer>— Jiawei Lu · 2025</footer>
 
 </body>
 </html>
