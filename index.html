@@ -14,6 +14,7 @@
       --dark: #1C1C1E;
       --mid: #5A5A5A;
       --light: #AFAFAF;
+      --accent: #1D3A6B;
     }
 
     html, body {
@@ -106,7 +107,59 @@
       color: var(--mid);
       max-width: 420px;
       font-weight: 300;
-      margin-bottom: 4rem;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── EDUCATION & SKILLS (below tagline) ── */
+    .hero-details {
+      max-width: 560px;
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .edu-line {
+      font-size: 0.72rem;
+      color: var(--mid);
+      line-height: 1.9;
+      margin-bottom: 0.3rem;
+    }
+
+    .edu-line .school {
+      font-weight: 500;
+      color: var(--dark);
+    }
+
+    .edu-line .degree {
+      color: var(--mid);
+    }
+
+    .edu-line .year {
+      color: var(--light);
+      font-size: 0.65rem;
+      letter-spacing: 0.05em;
+    }
+
+    .skill-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.4rem;
+      margin-top: 1.4rem;
+    }
+
+    .skill-pill {
+      font-size: 0.62rem;
+      letter-spacing: 0.04em;
+      color: var(--mid);
+      border: 1px solid #D5D5D5;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      transition: all 0.2s;
+    }
+
+    .skill-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     .scroll-hint {
@@ -265,6 +318,7 @@
       nav { padding: 1.2rem 1.5rem; }
       .cards-section { padding: 2rem 1rem 5rem; gap: 1px; }
       .card { aspect-ratio: 4/3; }
+      .hero-details { max-width: 90%; }
     }
   </style>
 </head>
@@ -287,9 +341,40 @@
     <h1 class="hero-name">Jiawei<br /><em>Lu</em></h1>
     <p class="hero-tagline">
       Building at the intersection of data &amp; AI.<br />
-      MS Statistics @ Columbia · Ex-Stepfun, Red Note.<br />
       Also: amateur florist.
     </p>
+
+    <div class="hero-details">
+      <p class="edu-line">
+        <span class="school">Columbia University</span>
+        <span class="degree"> · MS Statistics, Machine Learning Track</span>
+        <span class="year"> · 2025–2027</span>
+      </p>
+      <p class="edu-line">
+        <span class="school">Shanghai Jiao Tong University</span>
+        <span class="degree"> · B.Eng.</span>
+        <span class="year"> · 2021–2025</span>
+      </p>
+      <p class="edu-line" style="margin-top: 0.3rem; color: var(--light); font-size: 0.68rem;">
+        Ex-Stepfun · Ex-Red Note · Ex-Continental
+      </p>
+
+      <div class="skill-pills">
+        <span class="skill-pill">Python</span>
+        <span class="skill-pill">PyTorch</span>
+        <span class="skill-pill">HuggingFace</span>
+        <span class="skill-pill">Scikit-learn</span>
+        <span class="skill-pill">SQL</span>
+        <span class="skill-pill">R</span>
+        <span class="skill-pill">LLM</span>
+        <span class="skill-pill">NLP</span>
+        <span class="skill-pill">Prompt Engineering</span>
+        <span class="skill-pill">Data Visualization</span>
+        <span class="skill-pill">Statistical Modeling</span>
+        <span class="skill-pill">AWS / GCP</span>
+      </div>
+    </div>
+
     <div class="scroll-hint">
       <div class="scroll-line"></div>
       <span>Explore</span>
@@ -305,7 +390,7 @@
       <div class="card-content">
         <p class="card-number">01</p>
         <h2 class="card-title">CV &amp;<br />Experience</h2>
-        <p class="card-desc">Data · AI · ML Engineering</p>
+        <p class="card-desc">Internships · Projects · Volunteer</p>
       </div>
     </a>
 

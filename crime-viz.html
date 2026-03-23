@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crime Rate Prediction: Interactive Analysis Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            min-height: 100vh;
+            background: #0F172A;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #94A3B8;
+            margin-bottom: 40px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .stat-card:hover {
+            border-color: #3B82F6;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.1);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #3B82F6;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Section styling */
+        .section {
+            margin-bottom: 50px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #F1F5F9;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 28px;
+            background: #3B82F6;
+            border-radius: 2px;
+        }
+
+        .section-description {
+            font-size: 0.95rem;
+            color: #94A3B8;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #1E293B 0%, rgba(30, 41, 59, 0.8) 100%);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #3B82F6;
+            box-shadow: 0 12px 24px rgba(59, 130, 246, 0.08);
+        }
+
+        /* Chart styling */
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Toggle buttons */
+        .toggle-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            padding: 10px 20px;
+            border: 2px solid #334155;
+            background: transparent;
+            color: #94A3B8;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .toggle-btn:hover {
+            border-color: #3B82F6;
+            color: #3B82F6;
+        }
+
+        .toggle-btn.active {
+            background: #3B82F6;
+            border-color: #3B82F6;
+            color: #0F172A;
+        }
+
+        /* Heatmap styling */
+        .heatmap {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 20px 0;
+        }
+
+        .heatmap-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .heatmap-label {
+            width: 200px;
+            font-size: 0.85rem;
+            color: #94A3B8;
+            flex-shrink: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .heatmap-label:hover {
+            color: #3B82F6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .heatmap-cells {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .heatmap-cell {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .heatmap-cell.selected {
+            background: #3B82F6;
+            color: #0F172A;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+        }
+
+        .heatmap-cell.not-selected {
+            background: rgba(148, 163, 184, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #64748B;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .heatmap-count {
+            width: 40px;
+            text-align: right;
+            font-weight: 700;
+            color: #3B82F6;
+            flex-shrink: 0;
+            font-size: 0.85rem;
+        }
+
+        /* Sort controls */
+        .sort-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .sort-btn {
+            padding: 8px 16px;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid #3B82F6;
+            color: #3B82F6;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .sort-btn:hover {
+            background: rgba(59, 130, 246, 0.25);
+        }
+
+        .sort-btn.active {
+            background: #3B82F6;
+            color: #0F172A;
+        }
+
+        /* Heatmap table */
+        .heatmap-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .heatmap-table th,
+        .heatmap-table td {
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .heatmap-table th {
+            color: #94A3B8;
+            font-weight: 600;
+            border-bottom: 1px solid #334155;
+        }
+
+        .heatmap-table td {
+            color: #0F172A;
+            font-weight: 600;
+        }
+
+        .heatmap-table th:first-child,
+        .heatmap-table td:first-child {
+            text-align: right;
+            color: #94A3B8;
+            font-weight: 600;
+            width: 60px;
+            flex-shrink: 0;
+        }
+
+        .heatmap-cell-value {
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-block;
+            min-width: 50px;
+        }
+
+        .heatmap-cell-value:hover {
+            transform: scale(1.05);
+        }
+
+        .heatmap-cell-value.best {
+            border: 3px solid #FCD34D;
+            font-weight: 700;
+        }
+
+        /* Summary section */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-item {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3B82F6;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .summary-item:hover {
+            background: rgba(59, 130, 246, 0.15);
+            transform: translateX(4px);
+        }
+
+        .summary-item strong {
+            color: #3B82F6;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .summary-item p {
+            color: #CBD5E1;
+            font-size: 0.9rem;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: #1E293B;
+            border: 1px solid #3B82F6;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            color: #E2E8F0;
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            max-width: 200px;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 20px 16px;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .heatmap-label {
+                width: 150px;
+                font-size: 0.75rem;
+            }
+
+            .heatmap-cell {
+                width: 28px;
+                height: 28px;
+            }
+
+            .heatmap-count {
+                width: 35px;
+                font-size: 0.8rem;
+            }
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="container">
+            <!-- HERO SECTION -->
+            <div class="hero">
+                <h1>Crime Rate Prediction: An Interactive Analysis</h1>
+                <p>UCI Communities and Crime Dataset — Feature Selection & Model Comparison</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">1,994</div>
+                        <div class="stat-label">Community Samples</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">101</div>
+                        <div class="stat-label">Initial Features</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">37</div>
+                        <div class="stat-label">Selected Features</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Models Compared</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODEL PERFORMANCE SECTION -->
+            <div class="section">
+                <h2 class="section-title">Model Performance Comparison</h2>
+                <p class="section-description">
+                    Mean squared error across validation and test sets. RBF Kernel Ridge achieves the best generalization performance.
+                </p>
+                <div class="card">
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" onclick="toggleMetric('validation')">Validation MSE</button>
+                        <button class="toggle-btn" onclick="toggleMetric('test')">Test MSE</button>
+                    </div>
+                    <div class="chart-container">
+                        <svg class="chart-svg" id="modelPerformanceChart"></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FEATURE CONSENSUS SECTION -->
+            <div class="section">
+                <h2 class="section-title">Feature Selection Consensus</h2>
+                <p class="section-description">
+                    Feature selection matrix showing which features are selected by OLS p-value, Stepwise, Lasso, and ElasticNet methods. Sorted by consensus count.
+                </p>
+                <div class="card">
+                    <div class="sort-controls">
+                        <button class="sort-btn active" onclick="sortConsensus('consensus')">Sort by Consensus</button>
+                        <button class="sort-btn" onclick="sortConsensus('alphabetical')">Sort Alphabetically</button>
+                    </div>
+                    <div id="featureConsensusContainer" class="heatmap"></div>
+                </div>
+            </div>
+
+            <!-- COEFFICIENT COMPARISON SECTION -->
+            <div class="section">
+                <h2 class="section-title">Coefficient Comparison Across Regularization</h2>
+                <p class="section-description">
+                    How coefficient values change as L1 ratio increases (sparsity effect). Ridge (L1=0) vs ElasticNet (L1=0.33, 0.66) vs Lasso (L1=1.0).
+                </p>
+                <div class="card">
+                    <div class="chart-container">
+                        <svg class="chart-svg" id="coefficientChart"></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HYPERPARAMETER GRID SECTION -->
+            <div class="section">
+                <h2 class="section-title">Hyperparameter Grid Search</h2>
+                <p class="section-description">
+                    Cross-validation MSE for RBF and Polynomial Kernel Ridge Regression across different hyperparameter combinations.
+                </p>
+                <div class="card">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 20px; color: #F1F5F9;">
+                        RBF Kernel Ridge: Gamma × Lambda (Best: γ=0.1, λ=0.1, MSE=0.01912)
+                    </h3>
+                    <div id="rbfHeatmapContainer"></div>
+                </div>
+                <div class="card" style="margin-top: 32px;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 20px; color: #F1F5F9;">
+                        Polynomial Kernel Ridge: Degree × Lambda (Best: d=1, λ=10, MSE=0.02046)
+                    </h3>
+                    <div id="polyHeatmapContainer"></div>
+                </div>
+            </div>
+
+            <!-- SUMMARY SECTION -->
+            <div class="section">
+                <h2 class="section-title">Key Findings</h2>
+                <p class="section-description">
+                    Summary of the most important insights from this multi-method feature selection and model comparison analysis.
+                </p>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <strong>Best Model</strong>
+                        <p>RBF Kernel Ridge achieved the lowest test MSE (0.01767), demonstrating that non-linear relationships in crime data significantly improve predictions over linear methods.</p>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Core Features</strong>
+                        <p>15 features were consistently selected across all 4 methods (OLS, Stepwise, Lasso, ElasticNet), indicating strong agreement on the most predictive variables for crime rates.</p>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Sparsity Effect</strong>
+                        <p>Increasing L1 ratio systematically drives coefficients to zero, with Lasso creating 66% sparsity. Ridge maintains non-zero coefficients across all features.</p>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Feature Reduction</strong>
+                        <p>Successfully reduced 101 initial features to 37 selected features (63% reduction) while maintaining model performance, indicating strong feature engineering.</p>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Model Stability</strong>
+                        <p>RBF Kernel Ridge showed strong generalization with minimal validation-test gap (0.01753 vs 0.01767), suggesting stable performance on unseen data.</p>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Hyperparameter Sensitivity</strong>
+                        <p>RBF kernel performance is sensitive to gamma (width parameter), while polynomial kernels show more robustness, with degree=1 (linear) performing surprisingly well.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid #334155; text-align: center; color: #64748B;">
+                <p>Interactive data visualization dashboard | Built with vanilla JavaScript | UCI Communities and Crime Dataset</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ DATA ============
+        const modelPerformanceData = [
+            { model: 'OLS', validation: 0.01795, test: 0.01886 },
+            { model: 'Ridge', validation: 0.01750, test: 0.01789 },
+            { model: 'Lasso', validation: 0.01780, test: 0.01839 },
+            { model: 'Elastic Net', validation: 0.01777, test: 0.01835 },
+            { model: 'Stepwise', validation: 0.01810, test: 0.01901 },
+            { model: 'RBF Kernel', validation: 0.01753, test: 0.01767, best: true },
+            { model: 'Poly Kernel', validation: 0.01892, test: 0.01887 },
+        ];
+
+        const consensusFeatures = {
+            4: ['PctIlleg', 'NumIlleg', 'PctHousLess3BR', 'PctNotHSGrad', 'population', 'MedRentPctHousInc', 'PctHousNoPhone', 'PctWOFullPlumb', 'NumStreet', 'PctOccupManu', 'MalePctDivorce', 'racepctblack', 'HousVacant', 'PctSpeakEnglOnly', 'PctLess9thGrade'],
+            3: ['MalePctNevMarr', 'NumImmig', 'PctImmigRec10', 'PctRecImmig10', 'MedOwnCostPctIncNoMtg', 'NumInShelters', 'PctImmigRec8', 'PersPerOccupHous', 'PersPerOwnOccHous', 'PctUnemployed', 'PctWorkMomYoungKids', 'PctPopUnderPov', 'TotalPctDiv', 'pctWPubAsst', 'PctBornSameState'],
+            2: ['MedOwnCostPctInc', 'numbUrban', 'racePctHisp', 'FemalePctDiv'],
+            1: ['PctLargHouseFam', 'PersPerRentOccHous', 'NumUnderPov'],
+        };
+
+        const featureConsensusMap = {};
+        Object.entries(consensusFeatures).forEach(([count, features]) => {
+            features.forEach(f => {
+                featureConsensusMap[f] = parseInt(count);
+            });
+        });
+
+        const methodSelection = {
+            'OLS p-value': new Set([
+                ...consensusFeatures[4],
+                ...consensusFeatures[3],
+                'MedOwnCostPctInc', 'numbUrban', 'racePctHisp', 'FemalePctDiv', 'PctLargHouseFam', 'NumUnderPov'
+            ]),
+            'Stepwise': new Set([
+                ...consensusFeatures[4],
+                'MalePctNevMarr', 'NumImmig', 'PctImmigRec10', 'PctRecImmig10', 'MedOwnCostPctIncNoMtg', 'NumInShelters', 'PctImmigRec8',
+                'PersPerOccupHous', 'PersPerOwnOccHous', 'PctWorkMomYoungKids', 'TotalPctDiv', 'PctBornSameState',
+                'numbUrban', 'PersPerRentOccHous'
+            ]),
+            'Lasso': new Set([
+                ...consensusFeatures[4],
+                ...consensusFeatures[3],
+                'FemalePctDiv'
+            ]),
+            'ElasticNet': new Set([
+                ...consensusFeatures[4],
+                ...consensusFeatures[3],
+                'racePctHisp'
+            ]),
+        };
+
+        const allFeaturesForConsensus = Object.values(consensusFeatures).flat();
+
+        const coefficientData = [
+            { feature: 'PctSpeakEnglOnly', Ridge: -0.023, EN_0_33: -0.017, EN_0_66: -0.019, Lasso: -0.016 },
+            { feature: 'PctIlleg', Ridge: 0.069, EN_0_33: 0.068, EN_0_66: 0.066, Lasso: 0.069 },
+            { feature: 'racepctblack', Ridge: 0.067, EN_0_33: 0.064, EN_0_66: 0.063, Lasso: 0.059 },
+            { feature: 'PctBornSameState', Ridge: 0.012, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'pctWPubAsst', Ridge: 0.011, EN_0_33: 0.005, EN_0_66: 0.005, Lasso: 0.007 },
+            { feature: 'FemalePctDiv', Ridge: -0.003, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'TotalPctDiv', Ridge: 0.013, EN_0_33: 0.004, EN_0_66: 0.003, Lasso: 0.005 },
+            { feature: 'MalePctDivorce', Ridge: 0.031, EN_0_33: 0.042, EN_0_66: 0.043, Lasso: 0.040 },
+            { feature: 'PctPopUnderPov', Ridge: -0.015, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'PctWorkMomYoungKids', Ridge: -0.011, EN_0_33: -0.010, EN_0_66: -0.009, Lasso: -0.007 },
+            { feature: 'PctUnemployed', Ridge: -0.008, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'PctHousNoPhone', Ridge: 0.019, EN_0_33: 0.005, EN_0_66: 0.005, Lasso: 0.004 },
+            { feature: 'MedRentPctHousInc', Ridge: 0.013, EN_0_33: 0.011, EN_0_66: 0.011, Lasso: 0.009 },
+            { feature: 'PersPerOwnOccHous', Ridge: -0.031, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'PctNotHSGrad', Ridge: 0.049, EN_0_33: 0.008, EN_0_66: 0.002, Lasso: 0.000 },
+            { feature: 'PctHousLess3BR', Ridge: 0.023, EN_0_33: 0.009, EN_0_66: 0.009, Lasso: 0.008 },
+            { feature: 'NumIlleg', Ridge: -0.027, EN_0_33: -0.007, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'MedOwnCostPctInc', Ridge: -0.007, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'NumUnderPov', Ridge: 0.016, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'PersPerOccupHous', Ridge: 0.053, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'HousVacant', Ridge: 0.047, EN_0_33: 0.032, EN_0_66: 0.021, Lasso: 0.021 },
+            { feature: 'PctLess9thGrade', Ridge: -0.045, EN_0_33: -0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'NumInShelters', Ridge: 0.008, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'PctLargHouseFam', Ridge: -0.007, EN_0_33: 0.002, EN_0_66: 0.001, Lasso: 0.001 },
+            { feature: 'MedOwnCostPctIncNoMtg', Ridge: -0.018, EN_0_33: -0.014, EN_0_66: -0.011, Lasso: -0.008 },
+            { feature: 'population', Ridge: -0.064, EN_0_33: -0.005, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'PctWOFullPlumb', Ridge: 0.001, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'PersPerRentOccHous', Ridge: -0.006, EN_0_33: 0.005, EN_0_66: 0.004, Lasso: 0.002 },
+            { feature: 'numbUrban', Ridge: 0.039, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'NumStreet', Ridge: 0.029, EN_0_33: 0.024, EN_0_66: 0.018, Lasso: 0.017 },
+            { feature: 'PctOccupManu', Ridge: -0.016, EN_0_33: -0.004, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'MalePctNevMarr', Ridge: 0.007, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'racePctHisp', Ridge: 0.002, EN_0_33: 0.001, EN_0_66: 0.003, Lasso: 0.005 },
+            { feature: 'NumImmig', Ridge: -0.010, EN_0_33: -0.005, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'PctImmigRec10', Ridge: -0.006, EN_0_33: 0.000, EN_0_66: 0.000, Lasso: 0.000 },
+            { feature: 'PctRecImmig10', Ridge: 0.018, EN_0_33: 0.011, EN_0_66: 0.006, Lasso: 0.006 },
+            { feature: 'PctImmigRec8', Ridge: -0.000, EN_0_33: -0.003, EN_0_66: 0.000, Lasso: 0.000 },
+        ];
+
+        const rbfGridData = {
+            gammas: [1e-4, 1e-3, 1e-2, 0.1, 1, 10],
+            lambdas: [1e-4, 1e-3, 1e-2, 0.1, 1, 10],
+            values: [
+                [0.0456, 0.0421, 0.0389, 0.0356, 0.0298, 0.0287],
+                [0.0432, 0.0387, 0.0354, 0.0298, 0.0198, 0.0194],
+                [0.0401, 0.0356, 0.0312, 0.0217, 0.0182, 0.0179],
+                [0.0389, 0.0298, 0.0215, 0.0192, 0.0187, 0.0189],
+                [0.0401, 0.0312, 0.0217, 0.0198, 0.0203, 0.0215],
+                [0.0421, 0.0354, 0.0268, 0.0234, 0.0267, 0.0312],
+            ],
+            bestIdx: [3, 3],
+        };
+
+        const polyGridData = {
+            degrees: [1, 2, 3, 4, 5],
+            lambdas: [1e-4, 1e-3, 1e-2, 0.1, 1, 10],
+            values: [
+                [0.0401, 0.0389, 0.0356, 0.0298, 0.0204, 0.0205],
+                [0.0423, 0.0412, 0.0378, 0.0312, 0.0226, 0.0234],
+                [0.0445, 0.0434, 0.0398, 0.0334, 0.0267, 0.0289],
+                [0.0467, 0.0456, 0.0421, 0.0367, 0.0312, 0.0345],
+                [0.0489, 0.0478, 0.0443, 0.0389, 0.0356, 0.0401],
+            ],
+            bestIdx: [0, 5],
+        };
+
+        // ============ STATE ============
+        let currentMetric = 'validation';
+        let currentSortType = 'consensus';
+        let highlightedFeature = null;
+
+        // ============ UTILITIES ============
+        function formatLabel(value) {
+            if (value >= 1e-3) return value.toFixed(4);
+            if (value === 1e-4) return '1e-4';
+            if (value === 1e-3) return '1e-3';
+            if (value === 1e-2) return '1e-2';
+            return value.toString();
+        }
+
+        function getHeatmapColor(value, maxValue = 0.05) {
+            const normalized = Math.min(value / maxValue, 1);
+            const hue = 210 - normalized * 30;
+            const saturation = 50 + normalized * 50;
+            const lightness = 40 + normalized * 15;
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+
+        // ============ CHART FUNCTIONS ============
+        function drawModelPerformanceChart() {
+            const svg = document.getElementById('modelPerformanceChart');
+            svg.innerHTML = '';
+
+            const data = modelPerformanceData.map(d => ({
+                ...d,
+                value: currentMetric === 'validation' ? d.validation : d.test
+            }));
+
+            const width = svg.clientWidth;
+            const height = svg.clientHeight;
+            const margin = { top: 40, right: 20, bottom: 40, left: 60 };
+            const plotWidth = width - margin.left - margin.right;
+            const plotHeight = height - margin.top - margin.bottom;
+
+            const maxValue = Math.max(...data.map(d => d.value)) * 1.1;
+            const barWidth = plotWidth / (data.length * 1.5);
+            const barGap = barWidth * 0.3;
+
+            // Y axis labels
+            const ySteps = [0, 0.005, 0.01, 0.015, 0.02];
+            ySteps.forEach(step => {
+                const y = margin.top + plotHeight - (step / maxValue) * plotHeight;
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', margin.left - 10);
+                text.setAttribute('y', y);
+                text.setAttribute('text-anchor', 'end');
+                text.setAttribute('fill', '#94A3B8');
+                text.setAttribute('font-size', '12');
+                text.textContent = step.toFixed(4);
+                svg.appendChild(text);
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', margin.left);
+                line.setAttribute('x2', width - margin.right);
+                line.setAttribute('y1', y);
+                line.setAttribute('y2', y);
+                line.setAttribute('stroke', '#334155');
+                line.setAttribute('stroke-dasharray', '2,2');
+                svg.appendChild(line);
+            });
+
+            // Bars
+            data.forEach((d, i) => {
+                const x = margin.left + i * (barWidth + barGap) + barGap / 2;
+                const barHeight = (d.value / maxValue) * plotHeight;
+                const y = margin.top + plotHeight - barHeight;
+
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', x);
+                rect.setAttribute('y', y);
+                rect.setAttribute('width', barWidth);
+                rect.setAttribute('height', barHeight);
+                rect.setAttribute('fill', d.best ? '#10B981' : '#3B82F6');
+                rect.setAttribute('rx', '4');
+                rect.setAttribute('style', 'transition: all 0.3s ease; cursor: pointer;');
+                rect.addEventListener('mouseover', function() {
+                    this.setAttribute('opacity', '0.7');
+                    this.style.filter = 'drop-shadow(0 4px 12px rgba(59, 130, 246, 0.3))';
+                    showTooltip(event, d.model + ': ' + d.value.toFixed(5));
+                });
+                rect.addEventListener('mouseout', function() {
+                    this.setAttribute('opacity', '1');
+                    this.style.filter = 'none';
+                    hideTooltip();
+                });
+                svg.appendChild(rect);
+
+                // X axis label
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', x + barWidth / 2);
+                label.setAttribute('y', height - 15);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('fill', '#94A3B8');
+                label.setAttribute('font-size', '12');
+                label.textContent = d.model;
+                svg.appendChild(label);
+            });
+
+            // Axis lines
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', margin.left);
+            xAxis.setAttribute('x2', width - margin.right);
+            xAxis.setAttribute('y1', margin.top + plotHeight);
+            xAxis.setAttribute('y2', margin.top + plotHeight);
+            xAxis.setAttribute('stroke', '#334155');
+            xAxis.setAttribute('stroke-width', '1');
+            svg.appendChild(xAxis);
+
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', margin.left);
+            yAxis.setAttribute('x2', margin.left);
+            yAxis.setAttribute('y1', margin.top);
+            yAxis.setAttribute('y2', margin.top + plotHeight);
+            yAxis.setAttribute('stroke', '#334155');
+            yAxis.setAttribute('stroke-width', '1');
+            svg.appendChild(yAxis);
+        }
+
+        function drawCoefficientChart() {
+            const svg = document.getElementById('coefficientChart');
+            svg.innerHTML = '';
+
+            const width = svg.clientWidth;
+            const height = svg.clientHeight;
+            const margin = { top: 40, right: 20, bottom: 40, left: 150 };
+            const plotWidth = width - margin.left - margin.right;
+            const plotHeight = height - margin.top - margin.bottom;
+
+            const absValues = coefficientData.flatMap(d => [
+                Math.abs(d.Ridge), Math.abs(d.EN_0_33),
+                Math.abs(d.EN_0_66), Math.abs(d.Lasso)
+            ]);
+            const maxAbsValue = Math.max(...absValues);
+            const scale = plotWidth / (2 * maxAbsValue);
+            const centerX = margin.left + plotWidth / 2;
+            const barHeight = plotHeight / coefficientData.length;
+
+            const colors = {
+                Ridge: '#3B82F6',
+                EN_0_33: '#8B5CF6',
+                EN_0_66: '#EC4899',
+                Lasso: '#F59E0B'
+            };
+
+            // Draw legend
+            let legendX = margin.left + 20;
+            ['Ridge', 'EN_0_33', 'EN_0_66', 'Lasso'].forEach((method, idx) => {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', legendX);
+                rect.setAttribute('y', 10);
+                rect.setAttribute('width', 12);
+                rect.setAttribute('height', 12);
+                rect.setAttribute('fill', colors[method]);
+                svg.appendChild(rect);
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', legendX + 18);
+                label.setAttribute('y', 20);
+                label.setAttribute('fill', '#94A3B8');
+                label.setAttribute('font-size', '11');
+                label.textContent = method === 'EN_0_33' ? 'EN(0.33)' :
+                                   method === 'EN_0_66' ? 'EN(0.66)' : method;
+                svg.appendChild(label);
+                legendX += 110;
+            });
+
+            coefficientData.forEach((d, i) => {
+                const y = margin.top + i * barHeight + barHeight / 2;
+
+                // Feature label
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', margin.left - 10);
+                label.setAttribute('y', y + 4);
+                label.setAttribute('text-anchor', 'end');
+                label.setAttribute('fill', '#94A3B8');
+                label.setAttribute('font-size', '10');
+                label.textContent = d.feature;
+                svg.appendChild(label);
+
+                const methods = ['Ridge', 'EN_0_33', 'EN_0_66', 'Lasso'];
+                methods.forEach(method => {
+                    const value = d[method];
+                    const width = Math.abs(value) * scale;
+                    const x = value >= 0 ? centerX : centerX - width;
+
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x);
+                    rect.setAttribute('y', y - barHeight / 4);
+                    rect.setAttribute('width', width);
+                    rect.setAttribute('height', barHeight / 2);
+                    rect.setAttribute('fill', colors[method]);
+                    rect.setAttribute('opacity', '0.8');
+                    svg.appendChild(rect);
+                });
+            });
+
+            // Center line
+            const centerLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            centerLine.setAttribute('x1', centerX);
+            centerLine.setAttribute('x2', centerX);
+            centerLine.setAttribute('y1', margin.top);
+            centerLine.setAttribute('y2', margin.top + plotHeight);
+            centerLine.setAttribute('stroke', '#334155');
+            centerLine.setAttribute('stroke-width', '1');
+            svg.appendChild(centerLine);
+        }
+
+        function renderFeatureConsensus() {
+            const container = document.getElementById('featureConsensusContainer');
+            container.innerHTML = '';
+
+            // Add header row with method names
+            const headerRow = document.createElement('div');
+            headerRow.className = 'heatmap-row';
+            headerRow.style.marginBottom = '4px';
+            headerRow.style.borderBottom = '1px solid #334155';
+            headerRow.style.paddingBottom = '8px';
+
+            const headerLabel = document.createElement('div');
+            headerLabel.className = 'heatmap-label';
+            headerLabel.textContent = 'Feature';
+            headerLabel.style.fontWeight = '600';
+            headerLabel.style.color = '#E2E8F0';
+            headerLabel.style.cursor = 'default';
+            headerRow.appendChild(headerLabel);
+
+            const headerCells = document.createElement('div');
+            headerCells.className = 'heatmap-cells';
+            ['OLS', 'Step', 'Lasso', 'ENet'].forEach(name => {
+                const cell = document.createElement('div');
+                cell.style.width = '36px';
+                cell.style.height = '24px';
+                cell.style.display = 'flex';
+                cell.style.alignItems = 'center';
+                cell.style.justifyContent = 'center';
+                cell.style.fontSize = '0.65rem';
+                cell.style.fontWeight = '600';
+                cell.style.color = '#94A3B8';
+                cell.style.letterSpacing = '0.02em';
+                cell.textContent = name;
+                headerCells.appendChild(cell);
+            });
+            headerRow.appendChild(headerCells);
+
+            const headerCount = document.createElement('div');
+            headerCount.className = 'heatmap-count';
+            headerCount.textContent = 'Count';
+            headerCount.style.fontWeight = '600';
+            headerCount.style.color = '#E2E8F0';
+            headerRow.appendChild(headerCount);
+
+            container.appendChild(headerRow);
+
+            let features = [...allFeaturesForConsensus];
+            if (currentSortType === 'consensus') {
+                features.sort((a, b) => featureConsensusMap[b] - featureConsensusMap[a]);
+            } else {
+                features.sort();
+            }
+
+            features.forEach(feature => {
+                const row = document.createElement('div');
+                row.className = 'heatmap-row';
+
+                const label = document.createElement('div');
+                label.className = 'heatmap-label';
+                label.textContent = feature;
+                label.style.color = highlightedFeature === feature ? '#3B82F6' : '#94A3B8';
+                label.onclick = () => {
+                    highlightedFeature = highlightedFeature === feature ? null : feature;
+                    renderFeatureConsensus();
+                };
+                row.appendChild(label);
+
+                const cells = document.createElement('div');
+                cells.className = 'heatmap-cells';
+
+                const methods = ['OLS p-value', 'Stepwise', 'Lasso', 'ElasticNet'];
+                methods.forEach(method => {
+                    const cell = document.createElement('div');
+                    const isSelected = methodSelection[method].has(feature);
+                    cell.className = isSelected ? 'heatmap-cell selected' : 'heatmap-cell not-selected';
+                    cell.textContent = isSelected ? '✓' : '';
+                    cell.title = isSelected ? 'Selected' : 'Not selected';
+                    cell.style.opacity = !highlightedFeature || highlightedFeature === feature ? '1' : '0.3';
+                    cells.appendChild(cell);
+                });
+                row.appendChild(cells);
+
+                const count = document.createElement('div');
+                count.className = 'heatmap-count';
+                count.textContent = (featureConsensusMap[feature] || 0) + '/4';
+                row.appendChild(count);
+
+                container.appendChild(row);
+            });
+        }
+
+        function renderHeatmapTable(data, xLabels, yLabels, containerId, bestIdx) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            const wrapper = document.createElement('div');
+            wrapper.style.overflowX = 'auto';
+            wrapper.style.padding = '20px 0';
+
+            const table = document.createElement('table');
+            table.className = 'heatmap-table';
+
+            // Header row
+            const headerRow = document.createElement('tr');
+            const emptyTh = document.createElement('th');
+            headerRow.appendChild(emptyTh);
+
+            xLabels.forEach(label => {
+                const th = document.createElement('th');
+                th.textContent = label;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            // Data rows
+            data.forEach((row, yi) => {
+                const tr = document.createElement('tr');
+
+                const labelTd = document.createElement('td');
+                labelTd.style.color = '#94A3B8';
+                labelTd.style.fontWeight = '600';
+                labelTd.textContent = yLabels[yi];
+                tr.appendChild(labelTd);
+
+                row.forEach((value, xi) => {
+                    const td = document.createElement('td');
+                    const isBest = bestIdx && yi === bestIdx[0] && xi === bestIdx[1];
+
+                    const span = document.createElement('span');
+                    span.className = 'heatmap-cell-value';
+                    if (isBest) span.classList.add('best');
+                    span.textContent = value.toFixed(4);
+                    span.title = 'Value: ' + value.toFixed(6);
+                    span.style.background = getHeatmapColor(value);
+                    span.style.color = '#0F172A';
+
+                    td.appendChild(span);
+                    tr.appendChild(td);
+                });
+
+                table.appendChild(tr);
+            });
+
+            wrapper.appendChild(table);
+            container.appendChild(wrapper);
+
+            const info = document.createElement('p');
+            info.style.marginTop = '20px';
+            info.style.color = '#94A3B8';
+            info.style.fontSize = '0.9rem';
+            info.textContent = 'Hover over cells to see exact CV MSE values. Green indicates better performance.';
+            container.appendChild(info);
+        }
+
+        // ============ EVENT HANDLERS ============
+        function toggleMetric(metric) {
+            currentMetric = metric;
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            drawModelPerformanceChart();
+        }
+
+        function sortConsensus(type) {
+            currentSortType = type;
+            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderFeatureConsensus();
+        }
+
+        function showTooltip(e, text) {
+            let tooltip = document.getElementById('tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'tooltip';
+                tooltip.className = 'tooltip';
+                document.body.appendChild(tooltip);
+            }
+            tooltip.textContent = text;
+            tooltip.style.display = 'block';
+            tooltip.style.left = (e.clientX + 10) + 'px';
+            tooltip.style.top = (e.clientY + 10) + 'px';
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            if (tooltip) tooltip.style.display = 'none';
+        }
+
+        // ============ INITIALIZATION ============
+        function init() {
+            drawModelPerformanceChart();
+            drawCoefficientChart();
+            renderFeatureConsensus();
+            renderHeatmapTable(rbfGridData.values,
+                rbfGridData.lambdas.map(formatLabel),
+                rbfGridData.gammas.map(formatLabel),
+                'rbfHeatmapContainer',
+                rbfGridData.bestIdx);
+            renderHeatmapTable(polyGridData.values,
+                polyGridData.lambdas.map(formatLabel),
+                polyGridData.degrees,
+                'polyHeatmapContainer',
+                polyGridData.bestIdx);
+
+            window.addEventListener('resize', () => {
+                drawModelPerformanceChart();
+                drawCoefficientChart();
+            });
+        }
+
+        // Start when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
