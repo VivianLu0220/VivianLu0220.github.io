@@ -427,8 +427,8 @@
 <script>
 // ─── CONFIG ───
 const SKILL_API_URL    = 'https://ljw-chat.fayette0302.workers.dev/chat';
-const FINETUNE_API_URL = 'https://vivianlu0220-ljw-qwen.hf.space';
-//                        ↑ 部署 HF Space 后替换为你的 Space URL（不带 /chat）
+const FINETUNE_API_URL = 'https://vivianlu0220-ljw-qwen.hf.space/chat';
+//                        ↑ 部署 HF Space 后替换为你的 Space URL
 
 // ─── STATE ───
 const messagesEl = document.getElementById('messages');
@@ -625,37 +625,16 @@ async function sendSkill(typingEl) {
   history.push({ role: 'assistant', content: fullText });
 }
 
-// ─── FINETUNE (HF Space Gradio API) ───
+// ─── FINETUNE (HF Space, JSON) ───
 async function sendFinetune(typingEl) {
-  // Step 1: POST /call/chat to enqueue
-  const callRes = await fetch(`${FINETUNE_API_URL}/call/chat`, {
+  const res = await fetch(FINETUNE_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ data: [JSON.stringify(history)] }),
+    body: JSON.stringify({ messages: history }),
   });
-  if (!callRes.ok) throw new Error((await callRes.text()) || `HTTP ${callRes.status}`);
-  const { event_id } = await callRes.json();
-
-  // Step 2: GET /call/chat/{event_id} SSE stream for result
-  const resultRes = await fetch(`${FINETUNE_API_URL}/call/chat/${event_id}`);
-  if (!resultRes.ok) throw new Error(`HTTP ${resultRes.status}`);
-  const resultText = await resultRes.text();
-
-  // Parse SSE: look for "data: " lines
-  let reply = '(空回复)';
-  for (const line of resultText.split('\n')) {
-    if (line.startsWith('data: ')) {
-      try {
-        const parsed = JSON.parse(line.slice(6));
-        // Gradio returns [output_value]
-        if (Array.isArray(parsed) && parsed[0]) {
-          reply = parsed[0];
-        } else if (typeof parsed === 'string') {
-          reply = parsed;
-        }
-      } catch { /* ignore non-JSON data lines */ }
-    }
-  }
+  if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+  const data = await res.json();
+  const reply = data.reply || data.text || '(空回复)';
   typingEl.remove();
   appendMessage('bot', reply);
   history.push({ role: 'assistant', content: reply });
