@@ -143,7 +143,7 @@ export default {
             'anthropic-version': '2023-06-01',
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
+            model: 'claude-sonnet-4-5-20250929',
             max_tokens: 1024,
             system: SYSTEM_PROMPT,
             messages: trimmed,
@@ -212,7 +212,10 @@ export default {
         });
 
       } catch (err) {
-        return new Response('Internal Error', { status: 500, headers: CORS_HEADERS });
+        return new Response(`Internal Error: ${err.message}\n${err.stack || ''}`, {
+          status: 500,
+          headers: CORS_HEADERS,
+        });
       }
     }
 
