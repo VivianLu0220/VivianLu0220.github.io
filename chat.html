@@ -501,9 +501,9 @@ function renderWelcome() {
       <span class="mode-badge">Skill · Claude</span>
       <h2>Chat with <span>带电粒子</span></h2>
       <p>
-        Skill 版：Claude + 我的 prompt。<br/>
-        回答更正常但偏"伪人"。限 ${SKILL_MAX_ROUNDS} 轮/天。<br/>
-        想聊更"活"的就点右上角切到微调版。
+        Skill 版：伪人ver<br/>
+        限 ${SKILL_MAX_ROUNDS} 轮/天。<br/>
+        想聊更"活"的就点右上角切到微调版
       </p>`;
   } else {
     welcome.innerHTML = `
@@ -511,8 +511,8 @@ function renderWelcome() {
       <span class="mode-badge">Fine-tune · Qwen3B LoRA</span>
       <h2>Chat with <span>带电粒子</span></h2>
       <p>
-        微调版：我真实聊天记录训的 LoRA。<br/>
-        回答会更奇怪、更跳、更像我本人。
+        微调版：真实聊天记录训的 LoRA。<br/>
+        没钱租GPU，CPU跑回答大概要50秒...
       </p>`;
   }
   messagesEl.appendChild(welcome);
