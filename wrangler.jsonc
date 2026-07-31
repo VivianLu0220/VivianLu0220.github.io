@@ -1,0 +1,12 @@
+// 约饭 Worker（meet-worker.js）的部署配置。
+// 重新部署：npx wrangler deploy
+// 改管理密码：npx wrangler secret put ADMIN_KEY
+{
+  "name": "ljw-meet",
+  "main": "meet-worker.js",
+  "compatibility_date": "2026-07-01",
+  "kv_namespaces": [
+    { "binding": "KV", "id": "da082230890b4f178a22aeeaf4f46c27" }
+  ],
+  "observability": { "enabled": true }
+}
