@@ -249,9 +249,23 @@ export default {
         try {
           const res = await fetch(env.ICAL_URL);
           if (res.ok) {
-            const winStart = new Date(Date.now() - 86400000);
-            const winEnd = new Date(Date.now() + BUSY_WINDOW_DAYS * 86400000);
+            // 窗口：配置了 BUSY_FROM/BUSY_TO（YYYY-MM-DD，上海时区，含首尾）就用固定区间，
+            // 否则默认今天起 60 天
+            let winStart, winEnd;
+            if (env.BUSY_FROM && env.BUSY_TO) {
+              const [fy, fm, fd] = env.BUSY_FROM.split('-').map(Number);
+              const [ty, tm, td] = env.BUSY_TO.split('-').map(Number);
+              winStart = zonedToUtc(fy, fm, fd, 0, 0, 0, 'Asia/Shanghai');
+              winEnd = zonedToUtc(ty, tm, td, 24, 0, 0, 'Asia/Shanghai');
+            } else {
+              winStart = new Date(Date.now() - 86400000);
+              winEnd = new Date(Date.now() + BUSY_WINDOW_DAYS * 86400000);
+            }
             busy = parseIcsBusy(await res.text(), winStart, winEnd);
+            // 跨窗口边界的长事件会产生窗外日期的段，最后按日期再过滤一次
+            if (env.BUSY_FROM && env.BUSY_TO) {
+              busy = busy.filter(b => b.date >= env.BUSY_FROM && b.date <= env.BUSY_TO);
+            }
           }
         } catch (e) {
           console.error(e); // 日历拉取失败不影响约饭主流程

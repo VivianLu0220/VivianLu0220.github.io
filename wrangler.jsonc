@@ -5,6 +5,11 @@
   "name": "ljw-meet",
   "main": "meet-worker.js",
   "compatibility_date": "2026-07-01",
+  // 忙碌块只显示这个日期区间（上海时区，含首尾）；删掉这两行则默认今天起 60 天
+  "vars": {
+    "BUSY_FROM": "2026-08-11",
+    "BUSY_TO": "2026-08-27"
+  },
   "kv_namespaces": [
     { "binding": "KV", "id": "da082230890b4f178a22aeeaf4f46c27" }
   ],
