@@ -152,6 +152,13 @@
       background: transparent;
     }
     .slot.taken:hover { border-color: var(--line); }
+    .slot.busy {
+      cursor: default;
+      color: var(--light);
+      background: #EFEDE6;
+      border-color: transparent;
+    }
+    .slot.busy:hover { border-color: transparent; }
     .empty-hint { color: var(--light); font-size: 0.85rem; font-weight: 300; }
 
     /* ── FORM ── */
@@ -324,6 +331,7 @@ const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '�
 let selectedEvent = null;   // {category, name}
 let selectedSlot = null;    // slot id
 let slotsCache = [];
+let busyCache = [];         // 日历忙碌段 [{date,start,end}]
 
 const $ = id => document.getElementById(id);
 const isAdmin = new URLSearchParams(location.search).has('admin');
@@ -363,9 +371,14 @@ function renderEvents() {
 
 async function loadSlots() {
   try {
-    const res = await fetch(`${API_URL}/state`);
-    const data = await res.json();
+    const [stateRes, busyRes] = await Promise.all([
+      fetch(`${API_URL}/state`),
+      fetch(`${API_URL}/busy`).catch(() => null), // 忙碌块加载失败不影响主流程
+    ]);
+    const data = await stateRes.json();
     slotsCache = data.slots || [];
+    try { busyCache = busyRes && busyRes.ok ? (await busyRes.json()).busy || [] : []; }
+    catch { busyCache = []; }
     renderSlots();
   } catch (e) {
     $('slotList').innerHTML = '<p class="empty-hint">时段加载失败了，刷新试试？</p>';
@@ -380,7 +393,9 @@ function renderSlots() {
     return;
   }
   const byDate = {};
-  for (const s of slotsCache) (byDate[s.date] ||= []).push(s);
+  for (const s of slotsCache) (byDate[s.date] ||= []).push({ kind: 'slot', ...s });
+  // 日历忙碌块只插进有可选时段的日期，避免整页都是灰块
+  for (const b of busyCache) if (byDate[b.date]) byDate[b.date].push({ kind: 'busy', ...b });
 
   for (const date of Object.keys(byDate).sort()) {
     const day = document.createElement('div');
@@ -392,7 +407,14 @@ function renderSlots() {
 
     const row = document.createElement('div');
     row.className = 'slot-row';
-    for (const s of byDate[date]) {
+    for (const s of byDate[date].sort((a, b) => a.start.localeCompare(b.start))) {
+      if (s.kind === 'busy') {
+        const span = document.createElement('span');
+        span.className = 'slot busy';
+        span.textContent = `忙 · ${s.start} – ${s.end}`;
+        row.appendChild(span);
+        continue;
+      }
       const btn = document.createElement('button');
       btn.className = 'slot';
       if (s.status === 'free') {

@@ -7,6 +7,9 @@
  * 3. 把这个文件的内容粘贴进去，点 Deploy
  * 4. 在 Worker Settings → Variables and Secrets 里添加：
  *    - ADMIN_KEY = 你自己设一个管理密码（类型选 Secret），确认/管理时段要用
+ *    - ICAL_URL  = Google Calendar 的 Secret iCal 地址（类型选 Secret，可选）。
+ *      设置后 /busy 会返回未来 60 天的忙碌时间段（无事件详情），页面渲染成灰色块。
+ *      获取方式：Google Calendar 设置 → 我的日历 → 该日历 → 「iCal 格式的私密地址」
  * 5. 在 Worker Settings → Bindings 里添加 KV：
  *    - Variable name: KV
  *    - KV namespace: 可以复用 chat 那个 KV（本 Worker 的 key 都带 meet: 前缀，不会冲突）
@@ -66,6 +69,155 @@ function computeStatus(slotId, requests) {
   return 'free';
 }
 
+// ══════════ Google Calendar 忙碌时段（iCal Secret 地址，无需 OAuth）══════════
+// 只输出 {date, start, end} 时间段，不含事件标题等任何详情。
+const BUSY_CACHE_KEY = 'meet:busy-cache';
+const BUSY_CACHE_TTL = 900; // 15 分钟：日历改动最多滞后这么久
+const BUSY_WINDOW_DAYS = 60;
+
+// iCal 折行还原（RFC 5545：续行以空格/Tab 开头）
+function unfoldIcs(text) {
+  return text.replace(/\r?\n[ \t]/g, '').split(/\r?\n/);
+}
+
+// 把某时区的本地时间转成绝对时间（迭代两次修正偏移；上海无夏令时，一次就准）
+function zonedToUtc(y, mo, d, h, mi, s, tz) {
+  let ts = Date.UTC(y, mo - 1, d, h, mi, s);
+  for (let i = 0; i < 2; i++) {
+    const p = new Date(ts).toLocaleString('sv-SE', { timeZone: tz, hour12: false });
+    const [dp, tp] = p.split(' ');
+    const [Y, M, D] = dp.split('-').map(Number);
+    const [H, Mi, S] = tp.split(':').map(Number);
+    ts += Date.UTC(y, mo - 1, d, h, mi, s) - Date.UTC(Y, M - 1, D, H, Mi, S);
+  }
+  return new Date(ts);
+}
+
+// 绝对时间 → 上海时区的 {date:'YYYY-MM-DD', time:'HH:mm'}
+function toShanghai(dt) {
+  const p = dt.toLocaleString('sv-SE', { timeZone: 'Asia/Shanghai', hour12: false });
+  const [date, time] = p.split(' ');
+  return { date, time: time.slice(0, 5) };
+}
+
+// 解析 iCal 日期值。全天事件（VALUE=DATE）返回 null——生日/纪念日不算忙碌。
+// 无 Z 且无 TZID 的浮动时间按上海时间处理。
+function parseIcsDate(value, params) {
+  const m = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/);
+  if (!m) return null;
+  const [, y, mo, d, h, mi, s, z] = m;
+  if (z === 'Z') return new Date(Date.UTC(+y, mo - 1, +d, +h, +mi, +s));
+  return zonedToUtc(+y, +mo, +d, +h, +mi, +s, params.TZID || 'Asia/Shanghai');
+}
+
+// 展开重复事件的各次开始时间。支持 DAILY/WEEKLY（INTERVAL/UNTIL/COUNT/BYDAY 近似，
+// 固定毫秒步进、忽略非上海时区的夏令时切换）；其他 FREQ 只取首次。
+function expandStarts(ev, winEnd) {
+  if (!ev.rrule) return [ev.start];
+  const rule = Object.fromEntries(ev.rrule.split(';').map(p => p.split('=')));
+  const freq = rule.FREQ;
+  if (freq !== 'DAILY' && freq !== 'WEEKLY') return [ev.start];
+  const interval = Math.max(1, +(rule.INTERVAL || 1) || 1);
+  const until = rule.UNTIL ? parseIcsDate(rule.UNTIL, {}) : null;
+  const count = rule.COUNT ? +rule.COUNT : null;
+
+  const DAYS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+  const startMs = ev.start.getTime();
+  let offsets = [0];
+  if (freq === 'WEEKLY' && rule.BYDAY) {
+    const startDow = new Date(toShanghai(ev.start).date + 'T00:00:00Z').getUTCDay();
+    offsets = rule.BYDAY.split(',')
+      .map(c => DAYS.indexOf(c.replace(/^[+-]?\d+/, '')))
+      .filter(i => i >= 0)
+      .map(i => (i - startDow + 7) % 7)
+      .sort((a, b) => a - b);
+    if (!offsets.length) offsets = [0];
+  }
+  const stepMs = (freq === 'DAILY' ? 1 : 7) * 86400000 * interval;
+  const out = [];
+  let produced = 0;
+  for (let i = 0; i < 500; i++) {
+    const base = startMs + i * stepMs;
+    if (base > winEnd.getTime() + 8 * 86400000) break;
+    for (const off of offsets) {
+      const t = base + off * 86400000;
+      if (t < startMs) continue;
+      if (until && t > until.getTime()) continue;
+      produced++;
+      if (count && produced > count) return out;
+      out.push(new Date(t));
+      if (out.length >= 500) return out;
+    }
+  }
+  return out;
+}
+
+// iCal 文本 → 窗口内的忙碌段 [{date,start,end}]（上海时区，跨天切段，同日合并重叠）
+export function parseIcsBusy(text, winStart, winEnd) {
+  const events = [];
+  let cur = null;
+  for (const line of unfoldIcs(text)) {
+    if (line === 'BEGIN:VEVENT') { cur = {}; continue; }
+    if (line === 'END:VEVENT') { if (cur) events.push(cur); cur = null; continue; }
+    if (!cur) continue;
+    const idx = line.indexOf(':');
+    if (idx === -1) continue;
+    const [prop, ...paramParts] = line.slice(0, idx).split(';');
+    const params = {};
+    for (const pp of paramParts) { const [k, v] = pp.split('='); params[k] = v; }
+    const value = line.slice(idx + 1);
+    if (prop === 'DTSTART') { cur.start = parseIcsDate(value, params); cur.allDay = params.VALUE === 'DATE' || /^\d{8}$/.test(value); }
+    else if (prop === 'DTEND') cur.end = parseIcsDate(value, params);
+    else if (prop === 'RRULE') cur.rrule = value;
+    else if (prop === 'EXDATE') (cur.exdates ||= []).push(...value.split(',').map(v => parseIcsDate(v, params)).filter(Boolean));
+    else if (prop === 'STATUS') cur.status = value;
+    else if (prop === 'TRANSP') cur.transp = value;
+  }
+
+  const intervals = [];
+  for (const ev of events) {
+    if (!ev.start || !ev.end || ev.allDay) continue;
+    if (ev.status === 'CANCELLED' || ev.transp === 'TRANSPARENT') continue;
+    const dur = ev.end - ev.start;
+    if (dur <= 0) continue;
+    for (const st of expandStarts(ev, winEnd)) {
+      if (ev.exdates && ev.exdates.some(x => Math.abs(x - st) < 1000)) continue;
+      const en = new Date(st.getTime() + dur);
+      if (en <= winStart || st >= winEnd) continue;
+      intervals.push([st, en]);
+    }
+  }
+
+  // 跨天切段（按上海时区的自然日）
+  const byDate = {};
+  for (const [st, en] of intervals) {
+    let cursor = st;
+    while (cursor < en) {
+      const { date, time } = toShanghai(cursor);
+      const [y, m, d] = date.split('-').map(Number);
+      const dayEnd = zonedToUtc(y, m, d, 24, 0, 0, 'Asia/Shanghai');
+      const segEnd = en < dayEnd ? en : dayEnd;
+      const endTime = segEnd.getTime() === dayEnd.getTime() ? '24:00' : toShanghai(segEnd).time;
+      if (time !== endTime) (byDate[date] ||= []).push([time, endTime]);
+      cursor = dayEnd;
+    }
+  }
+
+  // 同日合并重叠/相邻
+  const busy = [];
+  for (const date of Object.keys(byDate).sort()) {
+    const segs = byDate[date].sort((a, b) => a[0].localeCompare(b[0]));
+    const merged = [];
+    for (const [s, e] of segs) {
+      const last = merged[merged.length - 1];
+      if (last && s <= last[1]) { if (e > last[1]) last[1] = e; }
+      else merged.push([s, e]);
+    }
+    for (const [s, e] of merged) busy.push({ date, start: s, end: e });
+  }
+  return busy;
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
@@ -86,6 +238,27 @@ export default {
             id, date, start, end, status: computeStatus(id, requests),
           })),
         });
+      }
+
+      // ── 公开：日历忙碌时段（只有时间段，无事件详情；KV 缓存 15 分钟）──
+      if (path === '/busy' && request.method === 'GET') {
+        if (!env.ICAL_URL) return json({ busy: [] });
+        const cached = await env.KV.get(BUSY_CACHE_KEY);
+        if (cached) return json(JSON.parse(cached));
+        let busy = [];
+        try {
+          const res = await fetch(env.ICAL_URL);
+          if (res.ok) {
+            const winStart = new Date(Date.now() - 86400000);
+            const winEnd = new Date(Date.now() + BUSY_WINDOW_DAYS * 86400000);
+            busy = parseIcsBusy(await res.text(), winStart, winEnd);
+          }
+        } catch (e) {
+          console.error(e); // 日历拉取失败不影响约饭主流程
+        }
+        const payload = { busy };
+        await env.KV.put(BUSY_CACHE_KEY, JSON.stringify(payload), { expirationTtl: BUSY_CACHE_TTL });
+        return json(payload);
       }
 
       // ── 公开：朋友提交邀请 ──
