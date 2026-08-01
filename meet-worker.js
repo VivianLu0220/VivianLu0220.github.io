@@ -38,6 +38,12 @@ const CORS_HEADERS = {
 
 const REQ_PREFIX = 'meet:req:';
 
+// /state 的实例级内存缓存：60 秒内的页面访问不消耗任何 KV 操作（尤其省 list 额度）。
+// 每个 Worker 实例各有一份；本实例上的提交/管理操作会立刻失效缓存，
+// 其他实例最多滞后 60 秒——和 KV 本身的最终一致性同量级，无感。
+const STATE_CACHE_MS = 60000;
+const stateCache = { data: null, ts: 0 };
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -231,13 +237,19 @@ export default {
     try {
       // ── 公开：查看时段（不暴露预约人信息）──
       if (path === '/state' && request.method === 'GET') {
+        if (stateCache.data && Date.now() - stateCache.ts < STATE_CACHE_MS) {
+          return json(stateCache.data);
+        }
         const slots = await getList(env, 'meet:slots');
         const requests = await getAllRequests(env);
-        return json({
+        const payload = {
           slots: slots.map(({ id, date, start, end }) => ({
             id, date, start, end, status: computeStatus(id, requests),
           })),
-        });
+        };
+        stateCache.data = payload;
+        stateCache.ts = Date.now();
+        return json(payload);
       }
 
       // ── 公开：日历忙碌时段（只有时间段，无事件详情；KV 缓存 15 分钟）──
@@ -332,6 +344,7 @@ export default {
           status: 'pending',
           createdAt: new Date().toISOString(),
         }));
+        stateCache.ts = 0;
         return json({ ok: true });
       }
 
@@ -398,6 +411,7 @@ export default {
         }
 
         await putList(env, 'meet:slots', slots);
+        stateCache.ts = 0;
         return json({ ok: true, slots });
       }
 
@@ -434,6 +448,7 @@ export default {
           return json({ error: '未知 action' }, 400);
         }
 
+        stateCache.ts = 0;
         return json({ ok: true });
       }
 
