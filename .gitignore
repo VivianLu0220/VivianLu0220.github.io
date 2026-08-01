@@ -1,0 +1,3 @@
+# wrangler 本地模拟存储（kv 命令不带 --remote 时写这里，不是生产数据）
+.wrangler/
+node_modules/
