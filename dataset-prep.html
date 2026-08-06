@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dataset Prep — VIVBLOOM</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #faf9f7;
+    color: #2c2c2c;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 400;
+    font-size: 2rem;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    color: #888;
+    font-size: 0.85rem;
+    font-weight: 300;
+    margin-bottom: 40px;
+  }
+
+  /* Drop zone */
+  .dropzone {
+    border: 2px dashed #d4d0ca;
+    border-radius: 12px;
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+    margin-bottom: 32px;
+  }
+  .dropzone:hover, .dropzone.dragover {
+    border-color: #a89e91;
+    background: #f7f5f2;
+  }
+  .dropzone p {
+    color: #888;
+    font-size: 0.9rem;
+    margin-top: 8px;
+  }
+  .dropzone .icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .dropzone input { display: none; }
+
+  /* Stats bar */
+  .stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+    font-size: 0.82rem;
+    color: #888;
+  }
+  .stats span strong { color: #2c2c2c; }
+
+  /* Image cards */
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .card {
+    display: flex;
+    gap: 20px;
+    background: #fff;
+    border: 1px solid #eae7e2;
+    border-radius: 10px;
+    padding: 16px;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .card .thumb {
+    width: 140px;
+    height: 140px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #f0ede8;
+  }
+
+  .card .info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .card .filename {
+    font-size: 0.78rem;
+    color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card .dims {
+    font-size: 0.72rem;
+    color: #bbb;
+  }
+
+  .card textarea {
+    width: 100%;
+    border: 1px solid #e0ddd7;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.5;
+    color: #2c2c2c;
+    transition: border-color 0.2s;
+  }
+  .card textarea:focus {
+    outline: none;
+    border-color: #a89e91;
+  }
+  .card textarea::placeholder { color: #ccc; }
+
+  .card .status {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+  }
+  .status.empty { background: #fef3e2; color: #c08a30; }
+  .status.filled { background: #e8f5e4; color: #4a8a3a; }
+
+  .card .remove {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+  .card .remove:hover { color: #e55; }
+
+  /* Actions */
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+
+  button.btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid #d4d0ca;
+    background: #fff;
+    color: #2c2c2c;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 400;
+  }
+  button.btn:hover { background: #f7f5f2; border-color: #a89e91; }
+  button.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  button.btn.primary {
+    background: #2c2c2c;
+    color: #fff;
+    border-color: #2c2c2c;
+  }
+  button.btn.primary:hover { background: #444; }
+  button.btn.primary:disabled { background: #aaa; border-color: #aaa; }
+
+  /* Progress / status messages */
+  .msg {
+    font-size: 0.82rem;
+    color: #888;
+    margin-top: 12px;
+  }
+
+  .template-hint {
+    background: #f7f5f2;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.82rem;
+    color: #666;
+    line-height: 1.6;
+  }
+  .template-hint code {
+    background: #eae7e2;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+  }
+
+  .save-indicator {
+    position: fixed;
+    top: 16px;
+    right: 20px;
+    font-size: 0.75rem;
+    color: #aaa;
+    background: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #eae7e2;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .save-indicator.visible { opacity: 1; }
+
+  @media (max-width: 600px) {
+    .card { flex-direction: column; }
+    .card .thumb { width: 100%; height: 200px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>VIVBLOOM Dataset Prep</h1>
+  <p class="subtitle">Upload bouquet photos, write captions, export as training dataset</p>
+
+  <div class="dropzone" id="dropzone">
+    <span class="icon">+</span>
+    <strong>Drop images here</strong>
+    <p>or click to browse — JPG / PNG / WEBP</p>
+    <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp">
+  </div>
+
+  <div class="template-hint">
+    Caption template: <code>a VIVBLOOM bouquet with {flowers}, {colors}</code><br>
+    Don't describe wrapping, ribbon, or lighting — those are learned from the trigger word.
+  </div>
+
+  <div class="stats" id="stats" style="display:none">
+    <span><strong id="totalCount">0</strong> images</span>
+    <span><strong id="captionedCount">0</strong> captioned</span>
+    <span><strong id="emptyCount">0</strong> need captions</span>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="actions" id="actions" style="display:none">
+    <button class="btn primary" id="exportBtn" disabled>Export dataset.zip</button>
+    <button class="btn" id="clearBtn">Clear all</button>
+  </div>
+
+  <div class="msg" id="msg"></div>
+  <div class="save-indicator" id="saveIndicator">Saved</div>
+</div>
+
+<script>
+// --- Zip builder (no dependencies) ---
+const ZipBuilder = (() => {
+  function crc32(buf) {
+    let crc = -1;
+    for (let i = 0; i < buf.length; i++) {
+      crc ^= buf[i];
+      for (let j = 0; j < 8; j++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+    return (crc ^ -1) >>> 0;
+  }
+  function dosTime(d) {
+    const time = (d.getSeconds() >> 1) | (d.getMinutes() << 5) | (d.getHours() << 11);
+    const date = d.getDate() | ((d.getMonth() + 1) << 5) | ((d.getFullYear() - 1980) << 9);
+    return { time, date };
+  }
+  function writeU16(a, o, v) { a[o] = v & 0xff; a[o+1] = (v >> 8) & 0xff; }
+  function writeU32(a, o, v) { a[o] = v & 0xff; a[o+1] = (v >> 8) & 0xff; a[o+2] = (v >> 16) & 0xff; a[o+3] = (v >> 24) & 0xff; }
+  return class {
+    constructor() { this.files = []; }
+    addFile(name, data) {
+      const enc = new TextEncoder();
+      const nameBytes = enc.encode(name);
+      const dataBytes = data instanceof Uint8Array ? data : enc.encode(data);
+      this.files.push({ name: nameBytes, data: dataBytes, crc: crc32(dataBytes) });
+    }
+    build() {
+      const now = new Date(); const { time, date } = dosTime(now);
+      let offset = 0; const lhs = []; const chs = [];
+      for (const f of this.files) {
+        const lh = new Uint8Array(30 + f.name.length);
+        writeU32(lh,0,0x04034b50); writeU16(lh,4,20); writeU16(lh,10,time); writeU16(lh,12,date);
+        writeU32(lh,14,f.crc); writeU32(lh,18,f.data.length); writeU32(lh,22,f.data.length); writeU16(lh,26,f.name.length);
+        lh.set(f.name, 30);
+        const ch = new Uint8Array(46 + f.name.length);
+        writeU32(ch,0,0x02014b50); writeU16(ch,4,20); writeU16(ch,6,20); writeU16(ch,12,time); writeU16(ch,14,date);
+        writeU32(ch,16,f.crc); writeU32(ch,20,f.data.length); writeU32(ch,24,f.data.length); writeU16(ch,28,f.name.length);
+        writeU32(ch,42,offset); ch.set(f.name, 46);
+        lhs.push({ header: lh, data: f.data }); chs.push(ch);
+        offset += lh.length + f.data.length;
+      }
+      let cs = 0; for (const c of chs) cs += c.length;
+      const eocd = new Uint8Array(22);
+      writeU32(eocd,0,0x06054b50); writeU16(eocd,8,this.files.length); writeU16(eocd,10,this.files.length);
+      writeU32(eocd,12,cs); writeU32(eocd,16,offset);
+      const result = new Uint8Array(offset + cs + 22); let pos = 0;
+      for (const { header, data } of lhs) { result.set(header, pos); pos += header.length; result.set(data, pos); pos += data.length; }
+      for (const c of chs) { result.set(c, pos); pos += c.length; }
+      result.set(eocd, pos);
+      return result;
+    }
+  };
+})();
+
+// --- IndexedDB persistence ---
+const DB_NAME = 'vivbloom-dataset';
+const DB_VERSION = 1;
+const STORE = 'images';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbSaveItem(item) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put({
+      id: item.id,
+      filename: item.filename,
+      caption: item.caption,
+      imageData: item.imageData,
+      thumbData: item.thumbData,
+      width: item.width,
+      height: item.height,
+    });
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function dbDeleteItem(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function dbClearAll() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).clear();
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function dbLoadAll() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => { db.close(); resolve(req.result); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  });
+}
+
+// --- Make a thumbnail data URL (small, for display only) ---
+function makeThumbnail(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const size = Math.min(img.naturalWidth, img.naturalHeight);
+      const sx = (img.naturalWidth - size) / 2;
+      const sy = (img.naturalHeight - size) / 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = 280; canvas.height = 280;
+      canvas.getContext('2d').drawImage(img, sx, sy, size, size, 0, 0, 280, 280);
+      resolve(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = src;
+  });
+}
+
+// --- Read file as ArrayBuffer ---
+function readFileAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// --- Save indicator ---
+const saveIndicator = document.getElementById('saveIndicator');
+let saveTimeout;
+function flashSaved() {
+  saveIndicator.classList.add('visible');
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => saveIndicator.classList.remove('visible'), 1500);
+}
+
+// --- Debounced save for caption edits ---
+const pendingSaves = new Map();
+function debouncedSave(item) {
+  if (pendingSaves.has(item.id)) clearTimeout(pendingSaves.get(item.id));
+  pendingSaves.set(item.id, setTimeout(async () => {
+    pendingSaves.delete(item.id);
+    await dbSaveItem(item);
+    flashSaved();
+  }, 500));
+}
+
+// --- App state ---
+const items = [];
+let idCounter = 0;
+
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const cardsEl = document.getElementById('cards');
+const statsEl = document.getElementById('stats');
+const actionsEl = document.getElementById('actions');
+const exportBtn = document.getElementById('exportBtn');
+const clearBtn = document.getElementById('clearBtn');
+const msgEl = document.getElementById('msg');
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => { handleFiles(fileInput.files); fileInput.value = ''; });
+
+async function handleFiles(fileList) {
+  const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+
+  msgEl.textContent = `Loading ${files.length} image${files.length > 1 ? 's' : ''}…`;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    msgEl.textContent = `Loading ${i + 1}/${files.length}: ${file.name}`;
+
+    const id = ++idCounter;
+    const objectUrl = URL.createObjectURL(file);
+    const [imageData, thumbData] = await Promise.all([
+      readFileAsArrayBuffer(file),
+      makeThumbnail(objectUrl),
+    ]);
+    URL.revokeObjectURL(objectUrl);
+
+    const dims = await new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.src = thumbData;
+    });
+
+    const item = {
+      id, filename: file.name, caption: '',
+      imageData, thumbData,
+      width: dims.w, height: dims.h,
+    };
+    items.push(item);
+    renderCard(item);
+    await dbSaveItem(item);
+
+    // yield to browser between images so it doesn't freeze
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  msgEl.textContent = '';
+  updateStats();
+  flashSaved();
+}
+
+function renderCard(item) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.id = item.id;
+
+  const escapedCaption = item.caption.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  card.innerHTML = `
+    <img class="thumb" src="${item.thumbData}" alt="">
+    <div class="info">
+      <div class="filename">${item.filename}</div>
+      <div class="dims">${item.width} × ${item.height}</div>
+      <textarea placeholder="a VIVBLOOM bouquet with peonies and roses, soft blush pink">${escapedCaption}</textarea>
+      <span class="status ${item.caption ? 'filled' : 'empty'}">${item.caption ? 'ready' : 'needs caption'}</span>
+    </div>
+    <button class="remove" title="Remove">×</button>
+  `;
+
+  const textarea = card.querySelector('textarea');
+  textarea.addEventListener('input', () => {
+    item.caption = textarea.value.trim();
+    const status = card.querySelector('.status');
+    if (item.caption) {
+      status.className = 'status filled';
+      status.textContent = 'ready';
+    } else {
+      status.className = 'status empty';
+      status.textContent = 'needs caption';
+    }
+    updateStats();
+    debouncedSave(item);
+  });
+
+  card.querySelector('.remove').addEventListener('click', async () => {
+    const idx = items.findIndex(i => i.id === item.id);
+    if (idx !== -1) items.splice(idx, 1);
+    card.remove();
+    updateStats();
+    await dbDeleteItem(item.id);
+    flashSaved();
+  });
+
+  cardsEl.appendChild(card);
+}
+
+function updateStats() {
+  const total = items.length;
+  const captioned = items.filter(i => i.caption).length;
+  const empty = total - captioned;
+
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('captionedCount').textContent = captioned;
+  document.getElementById('emptyCount').textContent = empty;
+
+  statsEl.style.display = total ? 'flex' : 'none';
+  actionsEl.style.display = total ? 'flex' : 'none';
+  exportBtn.disabled = captioned === 0;
+}
+
+clearBtn.addEventListener('click', async () => {
+  if (items.length && !confirm('Clear all images and captions?')) return;
+  items.length = 0;
+  cardsEl.innerHTML = '';
+  updateStats();
+  msgEl.textContent = '';
+  await dbClearAll();
+});
+
+exportBtn.addEventListener('click', async () => {
+  const ready = items.filter(i => i.caption);
+  if (!ready.length) return;
+
+  exportBtn.disabled = true;
+  msgEl.textContent = `Processing ${ready.length} images…`;
+  const zip = new ZipBuilder();
+
+  for (let i = 0; i < ready.length; i++) {
+    const item = ready[i];
+    const num = String(i + 1).padStart(2, '0');
+    const fname = `bouquet-${num}`;
+    msgEl.textContent = `Processing ${i + 1}/${ready.length}: ${item.filename}`;
+
+    const processed = await processImage(item.imageData);
+    zip.addFile(`${fname}.jpg`, processed);
+    zip.addFile(`${fname}.txt`, item.caption);
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  msgEl.textContent = 'Building zip…';
+  const blob = new Blob([zip.build()], { type: 'application/zip' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'dataset.zip'; a.click();
+  URL.revokeObjectURL(url);
+
+  msgEl.textContent = `Done — exported ${ready.length} image-caption pairs.`;
+  exportBtn.disabled = false;
+});
+
+function processImage(arrayBuffer) {
+  return new Promise((resolve) => {
+    const blob = new Blob([arrayBuffer]);
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const size = Math.min(img.naturalWidth, img.naturalHeight);
+      const sx = (img.naturalWidth - size) / 2;
+      const sy = (img.naturalHeight - size) / 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024; canvas.height = 1024;
+      canvas.getContext('2d').drawImage(img, sx, sy, size, size, 0, 0, 1024, 1024);
+      canvas.toBlob(b => {
+        b.arrayBuffer().then(buf => {
+          URL.revokeObjectURL(url);
+          resolve(new Uint8Array(buf));
+        });
+      }, 'image/jpeg', 0.92);
+    };
+    img.src = url;
+  });
+}
+
+// --- Restore from IndexedDB on page load ---
+(async () => {
+  try {
+    const saved = await dbLoadAll();
+    if (!saved.length) return;
+    msgEl.textContent = `Restoring ${saved.length} saved image${saved.length > 1 ? 's' : ''}…`;
+    for (const rec of saved) {
+      if (rec.id >= idCounter) idCounter = rec.id;
+      items.push(rec);
+      renderCard(rec);
+    }
+    updateStats();
+    msgEl.textContent = `Restored ${saved.length} images from last session.`;
+    setTimeout(() => { if (msgEl.textContent.startsWith('Restored')) msgEl.textContent = ''; }, 3000);
+  } catch(e) {
+    console.error('Failed to restore:', e);
+  }
+})();
+</script>
+</body>
+</html>
