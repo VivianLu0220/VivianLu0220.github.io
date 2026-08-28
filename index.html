@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en" class="lang-en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -498,8 +498,8 @@
   };
   document.querySelectorAll('[data-lang-btn]').forEach((b) =>
     b.addEventListener('click', () => apply(b.dataset.langBtn)));
-  let saved = 'zh';
-  try { saved = localStorage.getItem('nd-lang') || 'zh'; } catch (e) {}
+  let saved = 'en';
+  try { saved = localStorage.getItem('nd-lang') || 'en'; } catch (e) {}
   apply(saved);
 
   /* ---- hide floating fragments on narrow screens ---- */

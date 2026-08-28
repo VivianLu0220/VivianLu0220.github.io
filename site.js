@@ -15,8 +15,8 @@
   };
   document.querySelectorAll('[data-lang-btn]').forEach((b) =>
     b.addEventListener('click', () => apply(b.dataset.langBtn)));
-  let saved = 'zh';
-  try { saved = localStorage.getItem('nd-lang') || 'zh'; } catch (e) {}
+  let saved = 'en';
+  try { saved = localStorage.getItem('nd-lang') || 'en'; } catch (e) {}
   apply(saved);
   window.siteLang = () => (document.documentElement.classList.contains('lang-en') ? 'en' : 'zh');
 
