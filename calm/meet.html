@@ -4,69 +4,266 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>约个饭 · Jiawei Lu</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  main { position: relative; z-index: 2; max-width: 680px; margin: 0 auto; padding: 16vh var(--pad) 10vh; }
-  h1 { margin: 0 0 14px; font-family: var(--sans-zh); font-weight: 700; font-size: clamp(32px, 5vw, 64px); letter-spacing: -0.03em; line-height: 1.05; }
-  .subtitle { font-family: var(--sans-zh); font-weight: 300; font-size: 13.5px; line-height: 1.95; color: var(--fg-2); margin: 0 0 40px; }
-  .step-label { font-size: 10px; letter-spacing: 0.24em; color: var(--accent); margin-top: 44px; }
-  h2 { margin: 6px 0 16px; font-family: var(--sans-zh); font-weight: 500; font-size: 22px; color: #f4f2ef; }
-  .group-title { font-size: 10px; letter-spacing: 0.16em; color: var(--fg-4); margin: 14px 0 8px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip, .slot { font: inherit; font-family: var(--sans-zh); font-size: 12.5px; background: rgba(10,10,14,0.82); border: 1px solid var(--line); color: var(--fg-2); padding: 8px 14px; cursor: pointer; transition: border-color .25s, color .25s; }
-  .chip:hover, .slot:hover { border-color: var(--accent); }
-  .chip.selected, .slot.selected { border-color: var(--accent); background: oklch(0.6 0.12 var(--em-h) / 0.16); color: #f2f0ed; }
-  #otherInput { display: none; margin-top: 12px; }
-  .day { margin-bottom: 20px; }
-  .day-title { font-size: 10.5px; letter-spacing: 0.12em; color: oklch(0.78 0.13 var(--em-h)); margin-bottom: 8px; }
-  .slot-row { display: flex; flex-wrap: wrap; gap: 8px; }
-  .slot { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; }
-  .slot.taken { opacity: .35; cursor: not-allowed; text-decoration: line-through; }
-  .slot.taken:hover { border-color: var(--line); }
-  .slot.busy { opacity: .35; cursor: default; border-style: dashed; }
-  .slot.busy:hover { border-color: var(--line); }
-  .empty-hint { font-family: var(--sans-zh); font-weight: 300; font-size: 12.5px; color: var(--fg-4); }
-  #status { margin-top: 12px; font-family: var(--sans-zh); font-size: 12.5px; color: var(--accent-hot); min-height: 1.2em; }
-  .btn.ghost { background: transparent; }
-  .success { text-align: center; padding: 20vh 0; }
-  .success h2 { font-size: 30px; }
-  .success p { font-family: var(--sans-zh); font-weight: 300; line-height: 1.9; color: var(--fg-2); }
-  .admin-card { border: 1px solid var(--line); background: rgba(10,10,14,0.82); padding: 18px 20px; margin-bottom: 12px; }
-  .admin-card .who { font-family: var(--sans-zh); font-size: 15px; margin-bottom: 4px; color: #f4f2ef; }
-  .admin-card .meta { font-family: var(--sans-zh); font-weight: 300; font-size: 12.5px; color: var(--fg-2); line-height: 1.8; white-space: pre-line; }
-  .admin-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-  .tag { display: inline-block; font-size: 9.5px; letter-spacing: 0.14em; padding: 4px 8px; border: 1px solid; margin-left: 8px; vertical-align: middle; }
-  .tag.pending { color: #d6b25a; border-color: rgba(214,178,90,.4); }
-  .tag.confirmed { color: #8fc48f; border-color: rgba(143,196,143,.4); }
-  .tag.rejected { color: #c97b7b; border-color: rgba(201,123,123,.4); }
-  .slot-admin-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size: 12px; }
-  .add-slot-form { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 24px; }
-  .add-slot-form input { width: auto; flex: 1; min-width: 110px; margin-bottom: 0; }
-  a.cal-link { font-size: 11px; letter-spacing: 0.06em; }
-  footer { position: relative; z-index: 2; text-align: center; padding: 24px 0 40px; font-size: 10px; letter-spacing: 0.16em; color: var(--fg-5); }
+    :root {
+      --cream: #FAF8F3;
+      --dark: #1C1C1E;
+      --mid: #5A5A5A;
+      --light: #AFAFAF;
+      --accent: #1D3A6B;
+      --line: #E4E0D6;
+    }
 
-</style>
+    html, body {
+      background: var(--cream);
+      color: var(--dark);
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.4rem 3rem;
+      mix-blend-mode: multiply;
+    }
+    .nav-logo { text-decoration: none; display: flex; align-items: center; }
+    .nav-logo img { height: 36px; width: 36px; object-fit: contain; }
+    .nav-logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      color: var(--dark);
+    }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a {
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--dark); }
+
+    /* ── LAYOUT ── */
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 8rem 1.5rem 6rem;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: clamp(2.4rem, 6vw, 3.4rem);
+      line-height: 1.1;
+      text-align: center;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--mid);
+      font-size: 0.9rem;
+      font-weight: 300;
+      margin: 1rem 0 4rem;
+      line-height: 1.7;
+    }
+
+    .step-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--light);
+      margin: 3rem 0 0.4rem;
+    }
+    h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: 1.6rem;
+      margin-bottom: 1.2rem;
+    }
+
+    /* ── EVENT CHIPS ── */
+    .group-title {
+      font-size: 0.8rem;
+      color: var(--mid);
+      margin: 1.2rem 0 0.6rem;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .chip {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 300;
+      padding: 0.45rem 0.95rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--dark);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover { border-color: var(--mid); }
+    .chip.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #otherInput {
+      display: none;
+      margin-top: 0.8rem;
+      width: 100%;
+    }
+
+    /* ── SLOTS ── */
+    .day { margin-bottom: 1.4rem; }
+    .day-title {
+      font-size: 0.8rem;
+      color: var(--mid);
+      margin-bottom: 0.5rem;
+    }
+    .slot-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .slot {
+      font-size: 0.82rem;
+      font-weight: 300;
+      padding: 0.45rem 0.95rem;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .slot:hover { border-color: var(--mid); }
+    .slot.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .slot.taken {
+      cursor: not-allowed;
+      color: var(--light);
+      text-decoration: line-through;
+      background: transparent;
+    }
+    .slot.taken:hover { border-color: var(--line); }
+    .slot.busy {
+      cursor: default;
+      color: var(--light);
+      background: #EFEDE6;
+      border-color: transparent;
+    }
+    .slot.busy:hover { border-color: transparent; }
+    .empty-hint { color: var(--light); font-size: 0.85rem; font-weight: 300; }
+
+    /* ── FORM ── */
+    input, textarea {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 300;
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--dark);
+      margin-bottom: 0.8rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.85rem 2.4rem;
+      border: 1px solid var(--dark);
+      border-radius: 999px;
+      background: var(--dark);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: var(--accent); border-color: var(--accent); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn.ghost { background: transparent; color: var(--dark); }
+    .btn.ghost:hover { background: var(--dark); color: #fff; }
+    .btn.small { padding: 0.4rem 1rem; font-size: 0.7rem; }
+
+    #status { margin-top: 1rem; font-size: 0.85rem; color: var(--accent); min-height: 1.2em; }
+
+    .success {
+      text-align: center;
+      padding: 4rem 0;
+    }
+    .success h2 { font-size: 2rem; margin-bottom: 1rem; }
+    .success p { color: var(--mid); font-weight: 300; line-height: 1.8; }
+
+    /* ── ADMIN ── */
+    .admin-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 1.1rem 1.3rem;
+      margin-bottom: 0.9rem;
+    }
+    .admin-card .meta { font-size: 0.8rem; color: var(--mid); line-height: 1.7; white-space: pre-line; }
+    .admin-card .who { font-size: 0.95rem; margin-bottom: 0.2rem; }
+    .admin-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; flex-wrap: wrap; }
+    .tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.4rem;
+    }
+    .tag.pending   { background: #FFF3D6; color: #8A6D1B; }
+    .tag.confirmed { background: #E3EFE3; color: #2F6B2F; }
+    .tag.rejected  { background: #F3E3E3; color: #8A2F2F; }
+    .slot-admin-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.85rem;
+      font-weight: 300;
+    }
+    .add-slot-form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0 2rem; }
+    .add-slot-form input { width: auto; flex: 1; min-width: 110px; margin-bottom: 0; }
+    a.cal-link { color: var(--accent); font-size: 0.8rem; }
+
+    footer {
+      text-align: center;
+      padding: 3rem 0;
+      color: var(--light);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+    }
+  </style>
 </head>
-<body data-noise-mode="instrument" data-noise-chaos="0.35" data-noise-dropouts="off">
-<canvas data-noise></canvas>
-<div data-veil></div>
-  <nav class="top chrome">
-  <span class="dot"></span>
-  <a href="index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
-  <a href="cv.html"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
-  <a href="flowers.html"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
-  <a href="chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
-  <a href="blog/index.html" class="opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
-</nav>
-<div class="controls">
-  <div class="lang chrome">
-    <button data-lang-btn="zh">中文</button>
-    <button data-lang-btn="en">EN</button>
-  </div>
-</div>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <img src="../logo.png" alt="Jiawei Lu" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+      <span class="nav-logo-text" style="display:none;">Way</span>
+    </a>
+    <div class="nav-links">
+      <a href="cv.html">CV</a>
+      <a href="flowers.html">Flowers</a>
+      <a href="chat.html">Chat</a>
+    </div>
+  </nav>
 
   <main>
     <!-- ══ 朋友视图 ══ -->
@@ -499,7 +696,5 @@ if (isAdmin) {
   $('submitBtn').addEventListener('click', submitRequest);
 }
 </script>
-<script src="mind-noise.js"></script>
-<script src="site.js"></script>
 </body>
 </html>

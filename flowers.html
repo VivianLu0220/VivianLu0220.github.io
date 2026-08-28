@@ -1,521 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>In Bloom — Jiawei Lu</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --cream: #FBF7F0;
-      --warm-white: #FDFAF5;
-      --bark: #5C4033;
-      --dust: #9A7B6C;
-      --mist: #C4AB9A;
-      --petal: #D4A5A0;
-      --blush: #F0E0DA;
-      --sage: #A8C5A0;
-      --sage-light: #D8EDD4;
-      --border: #E8DDD5;
-      --sand: #C9B99A;
-    }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--cream);
-      color: var(--bark);
-      font-family: 'Inter', sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* ── NAV ── */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(251,247,240,0.9);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 3rem;
-    }
-
-    .nav-logo { display:flex; align-items:center; }
-    .nav-logo img { height:36px; width:36px; object-fit:contain; }
-    .nav-logo-text {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.05rem;
-      letter-spacing: 0.1em;
-      color: var(--bark);
-      text-decoration: none;
-    }
-
-    .nav-links { display: flex; gap: 1.8rem; }
-    .nav-links a {
-      font-size: 0.72rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--mist);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--bark); }
-    .nav-links a.active { color: var(--petal); }
-
-    /* ── HERO ── */
-    .hero {
-      min-height: 60vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 5rem 2rem 4rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Decorative petal shapes */
-    .petal-deco {
-      position: absolute;
-      border-radius: 50% 0 50% 0;
-      opacity: 0.12;
-      pointer-events: none;
-    }
-
-    .pd-1 {
-      width: 300px; height: 300px;
-      background: var(--petal);
-      top: -60px; left: -80px;
-      transform: rotate(30deg);
-    }
-
-    .pd-2 {
-      width: 200px; height: 200px;
-      background: var(--sage);
-      bottom: -40px; right: -50px;
-      transform: rotate(-20deg);
-    }
-
-    .pd-3 {
-      width: 150px; height: 150px;
-      background: var(--sand);
-      top: 30%; right: 10%;
-      transform: rotate(15deg);
-      opacity: 0.08;
-    }
-
-    .hero-label {
-      font-size: 0.65rem;
-      letter-spacing: 0.35em;
-      text-transform: uppercase;
-      color: var(--petal);
-      margin-bottom: 1.2rem;
-    }
-
-    .hero h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3rem, 8vw, 6rem);
-      font-weight: 300;
-      font-style: italic;
-      line-height: 1.1;
-      color: var(--bark);
-      margin-bottom: 1.5rem;
-    }
-
-    .hero-sub {
-      font-size: 0.82rem;
-      color: var(--dust);
-      max-width: 400px;
-      line-height: 1.9;
-      font-weight: 300;
-    }
-
-    /* ── ABOUT FLORIST ── */
-    .florist-about {
-      max-width: 680px;
-      margin: 0 auto 5rem;
-      padding: 0 2rem;
-      text-align: center;
-    }
-
-    .florist-about p {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.15rem;
-      font-weight: 300;
-      line-height: 2;
-      color: var(--dust);
-      font-style: italic;
-    }
-
-    .florist-divider {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1.5rem;
-      margin: 2.5rem auto;
-    }
-
-    .divider-line {
-      width: 60px;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .divider-petal {
-      font-size: 1rem;
-      color: var(--petal);
-    }
-
-    /* ── GALLERY ── */
-    .gallery-section {
-      padding: 0 3rem 8rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .gallery-label {
-      font-size: 0.62rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--mist);
-      margin-bottom: 2rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .gallery-label::before, .gallery-label::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-    }
-
-    /* Tall card in first position */
-    .gallery-grid .card:first-child {
-      grid-row: span 2;
-    }
-
-    .card {
-      position: relative;
-      border-radius: 4px;
-      overflow: hidden;
-      cursor: pointer;
-      background: var(--blush);
-      transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.4s;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(92,64,51,0.1);
-    }
-
-    /* Real photo cards */
-    .card-img {
-      width: 100%;
-      aspect-ratio: 3/4;
-      display: block;
-      object-fit: cover;
-    }
-
-    .card:first-child .card-img {
-      aspect-ratio: unset;
-      height: 100%;
-    }
-
-    .card-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(92,64,51,0.5) 0%, transparent 50%);
-      opacity: 0;
-      transition: opacity 0.3s;
-      display: flex;
-      align-items: flex-end;
-      padding: 1.5rem;
-    }
-
-    .card:hover .card-overlay { opacity: 1; }
-
-    .card-caption {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1rem;
-      font-style: italic;
-      font-weight: 300;
-      color: rgba(255,255,255,0.9);
-      line-height: 1.3;
-    }
-
-    /* ── UPLOAD HINT ── */
-    .upload-hint {
-      text-align: center;
-      padding: 3rem 2rem;
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      margin-top: 2rem;
-    }
-
-    .upload-hint p {
-      font-size: 0.75rem;
-      color: var(--mist);
-      line-height: 1.8;
-    }
-
-    .upload-hint strong {
-      color: var(--dust);
-      font-weight: 500;
-    }
-
-    /* ── QUOTE ── */
-    .quote-block {
-      text-align: center;
-      padding: 4rem 2rem;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-
-    .quote-block blockquote {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.4rem;
-      font-style: italic;
-      font-weight: 300;
-      color: var(--dust);
-      line-height: 1.8;
-    }
-
-    .quote-block cite {
-      display: block;
-      margin-top: 1rem;
-      font-size: 0.68rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--mist);
-      font-style: normal;
-    }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 700px) {
-      nav { padding: 1rem 1.2rem; }
-      .gallery-section { padding: 0 1rem 5rem; }
-      .gallery-grid { grid-template-columns: repeat(2, 1fr); }
-      .gallery-grid .card:first-child { grid-row: span 1; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>In Bloom — Jiawei Lu</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<style>
+  .bloom-intro { display: grid; grid-template-columns: 1fr 0.9fr; gap: clamp(30px, 5vw, 90px); align-items: end; margin-bottom: 8vh; }
+  h1.serif { margin: 0; font-family: var(--serif); font-weight: 400; font-size: clamp(44px, 6vw, 96px); line-height: 1.08; letter-spacing: -0.01em; display: flex; flex-direction: column; }
+  h1.serif .it { font-style: italic; color: oklch(0.84 0.13 var(--em-h)); }
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .photo { position: relative; aspect-ratio: 3 / 4; border: 1px solid oklch(0.55 0.07 var(--em-h) / 0.28); overflow: hidden; background: #111116; cursor: zoom-in; transition: filter .55s cubic-bezier(.2,.7,.2,1), opacity .55s, transform .55s; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.85) contrast(1.02); transition: filter .5s, transform .8s cubic-bezier(.2,.7,.2,1); }
+  .photo:hover img { filter: saturate(1) contrast(1.04); transform: scale(1.03); }
+  .photo .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px; font-size: 9.5px; letter-spacing: 0.16em; color: #d8d5d0; background: linear-gradient(180deg, rgba(11,11,15,0) 0%, rgba(11,11,15,0.78) 100%); }
+  .lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(5,5,10,0.94); display: none; align-items: center; justify-content: center; padding: 40px; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 100%; max-height: 86vh; border: 1px solid var(--line); }
+  .lightbox button { position: absolute; background: none; border: 1px solid var(--line); color: var(--fg-2); font: inherit; font-size: 18px; width: 44px; height: 44px; cursor: pointer; }
+  .lightbox button:hover { border-color: var(--accent); color: var(--accent-hot); }
+  .lb-close { top: 20px; right: 26px; }
+  .lb-prev { left: 20px; top: 50%; transform: translateY(-50%); }
+  .lb-next { right: 20px; top: 50%; transform: translateY(-50%); }
+  .lb-cap { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; font-size: 10px; letter-spacing: 0.16em; color: var(--fg-4); }
+  @media (max-width: 900px) { .bloom-intro { grid-template-columns: 1fr; } .gallery { grid-template-columns: 1fr 1fr; } .lightbox { padding: 16px; } .lb-prev, .lb-next { display: none; } }
+  @media (max-width: 560px) { .gallery { grid-template-columns: 1fr; } }
+</style>
 </head>
-<body>
+<body data-noise-mode="instrument" data-noise-chaos="0.3" data-noise-dropouts="off">
 
-  <nav>
-    <a href="index.html" class="nav-logo"><img src="logo.png" alt="Jiawei Lu" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" /><span class="nav-logo-text" style="display:none;">Way</span></a>
-    <div class="nav-links">
-      <a href="cv.html">CV</a>
-      <a href="flowers.html" class="active">Flowers</a>
-      <a href="chat.html">Chat</a>
+<canvas data-noise></canvas>
+<div data-veil></div>
+
+<nav class="top chrome">
+  <span class="dot"></span>
+  <a href="index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
+  <a href="cv.html"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
+  <a href="flowers.html" class="active"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
+  <a href="chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
+  <a href="blog/index.html" class="opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
+</nav>
+<div class="controls">
+  <div class="lang chrome">
+    <button data-lang-btn="zh">中文</button>
+    <button data-lang-btn="en">EN</button>
+  </div>
+</div>
+
+<main class="page">
+  <div class="sec-head">
+    <div class="eyebrow"><span data-lang="zh">记录 04 — 慢速</span><span data-lang="en">RECORD 04 — SLOW CHANNEL</span></div>
+    <div class="rule"></div>
+    <div class="hint" data-mood-readout>DRIFTING · 走神</div>
+  </div>
+
+  <div class="bloom-intro">
+    <div>
+      <h1 class="serif" data-lang="zh">
+        <span data-restless-item>花期</span>
+        <span class="it" data-restless-item>29 束</span>
+      </h1>
+      <h1 class="serif" data-lang="en">
+        <span data-restless-item>In Bloom</span>
+        <span class="it" data-restless-item>29 arrangements</span>
+      </h1>
     </div>
-  </nav>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="petal-deco pd-1"></div>
-    <div class="petal-deco pd-2"></div>
-    <div class="petal-deco pd-3"></div>
-    <p class="hero-label">Floral Art · Amateur Florist</p>
-    <h1>In<br />Bloom</h1>
-    <p class="hero-sub">Where data ends and petals begin — a quieter, more fragrant side of me.</p>
-  </section>
-
-  <!-- ABOUT -->
-  <div class="florist-about">
-    <div class="florist-divider">
-      <span class="divider-line"></span>
-      <span class="divider-petal">✿</span>
-      <span class="divider-line"></span>
-    </div>
-    <p>
-      Outside of code and statistics, I find my hands in flowers.
-      Each bouquet is a small experiment in texture, color, and balance —
-      not so different from the work I do in data, just softer.
-    </p>
-    <div class="florist-divider">
-      <span class="divider-line"></span>
-      <span class="divider-petal">✿</span>
-      <span class="divider-line"></span>
+    <div>
+      <p class="zh-body" data-lang="zh" style="margin: 0; font-size: 14.5px; line-height: 2.05;">不写代码的时候，手上一般有花。每一束都是在试颜色、质感和平衡，和做数据差不多，只是慢一点。点开可以看大图。</p>
+      <p class="en-body" data-lang="en" style="margin: 0; font-size: 14.5px; line-height: 1.9;">When I'm not writing code, there are usually flowers in my hands. Each bouquet is a small experiment in texture, colour and balance — not unlike data work, just slower. Click any one to see it large.</p>
     </div>
   </div>
 
-  <!-- GALLERY -->
-  <div class="gallery-section">
-    <p class="gallery-label">Works</p>
+  <div class="gallery" id="gallery"></div>
+</main>
 
-    <div class="gallery-grid">
+<footer class="bar">
+  <span>JIAWEI LU · IN BLOOM</span>
+  <span data-mood-readout>DRIFTING · 走神</span>
+  <span><a href="index.html">← <span data-lang="zh">首页</span><span data-lang="en">HOME</span></a></span>
+</footer>
 
-      <div class="card">
-        <img class="card-img" src="flower/flower-01.jpg" alt="Floral arrangement No. 01" />
-        <div class="card-overlay"><p class="card-caption">No. 01</p></div>
-      </div>
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose" aria-label="Close">✕</button>
+  <button class="lb-prev" id="lbPrev" aria-label="Previous">‹</button>
+  <img id="lbImg" src="" alt="">
+  <button class="lb-next" id="lbNext" aria-label="Next">›</button>
+  <p class="lb-cap" id="lbCap"></p>
+</div>
 
-      <div class="card">
-        <img class="card-img" src="flower/flower-02.jpg" alt="Floral arrangement No. 02" />
-        <div class="card-overlay"><p class="card-caption">No. 02</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-03.jpg" alt="Floral arrangement No. 03" />
-        <div class="card-overlay"><p class="card-caption">No. 03</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-04.jpg" alt="Floral arrangement No. 04" />
-        <div class="card-overlay"><p class="card-caption">No. 04</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-05.jpg" alt="Floral arrangement No. 05" />
-        <div class="card-overlay"><p class="card-caption">No. 05</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-06.jpg" alt="Floral arrangement No. 06" />
-        <div class="card-overlay"><p class="card-caption">No. 06</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-07.jpg" alt="Floral arrangement No. 07" />
-        <div class="card-overlay"><p class="card-caption">No. 07</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-08.jpg" alt="Floral arrangement No. 08" />
-        <div class="card-overlay"><p class="card-caption">No. 08</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-09.jpg" alt="Floral arrangement No. 09" />
-        <div class="card-overlay"><p class="card-caption">No. 09</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-10.jpg" alt="Floral arrangement No. 10" />
-        <div class="card-overlay"><p class="card-caption">No. 10</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-11.jpg" alt="Floral arrangement No. 11" />
-        <div class="card-overlay"><p class="card-caption">No. 11</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-12.jpg" alt="Floral arrangement No. 12" />
-        <div class="card-overlay"><p class="card-caption">No. 12</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-13.jpg" alt="Floral arrangement No. 13" />
-        <div class="card-overlay"><p class="card-caption">No. 13</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-14.jpg" alt="Floral arrangement No. 14" />
-        <div class="card-overlay"><p class="card-caption">No. 14</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-15.jpg" alt="Floral arrangement No. 15" />
-        <div class="card-overlay"><p class="card-caption">No. 15</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-16.jpg" alt="Floral arrangement No. 16" />
-        <div class="card-overlay"><p class="card-caption">No. 16</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-17.jpg" alt="Floral arrangement No. 17" />
-        <div class="card-overlay"><p class="card-caption">No. 17</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-18.jpg" alt="Floral arrangement No. 18" />
-        <div class="card-overlay"><p class="card-caption">No. 18</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-19.jpg" alt="Floral arrangement No. 19" />
-        <div class="card-overlay"><p class="card-caption">No. 19</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-20.jpg" alt="Floral arrangement No. 20" />
-        <div class="card-overlay"><p class="card-caption">No. 20</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-21.jpg" alt="Floral arrangement No. 21" />
-        <div class="card-overlay"><p class="card-caption">No. 21</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-22.jpg" alt="Floral arrangement No. 22" />
-        <div class="card-overlay"><p class="card-caption">No. 22</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-23.jpg" alt="Floral arrangement No. 23" />
-        <div class="card-overlay"><p class="card-caption">No. 23</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-24.jpg" alt="Floral arrangement No. 24" />
-        <div class="card-overlay"><p class="card-caption">No. 24</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-25.jpg" alt="Floral arrangement No. 25" />
-        <div class="card-overlay"><p class="card-caption">No. 25</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-26.jpg" alt="Floral arrangement No. 26" />
-        <div class="card-overlay"><p class="card-caption">No. 26</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-27.jpg" alt="Floral arrangement No. 27" />
-        <div class="card-overlay"><p class="card-caption">No. 27</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-28.jpg" alt="Floral arrangement No. 28" />
-        <div class="card-overlay"><p class="card-caption">No. 28</p></div>
-      </div>
-
-      <div class="card">
-        <img class="card-img" src="flower/flower-29.jpg" alt="Floral arrangement No. 29" />
-        <div class="card-overlay"><p class="card-caption">No. 29</p></div>
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- QUOTE -->
-  <div class="quote-block">
-    <blockquote>
-      "To plant a garden is to believe in tomorrow."
-    </blockquote>
-    <cite>— Audrey Hepburn</cite>
-  </div>
-
+<script src="mind-noise.js"></script>
+<script src="site.js"></script>
+<script>
+  const N = 29;
+  const gallery = document.getElementById('gallery');
+  for (let i = 1; i <= N; i++) {
+    const n = String(i).padStart(2, '0');
+    const d = document.createElement('div');
+    d.className = 'photo';
+    d.innerHTML = `<img src="flower/flower-${n}.jpg" alt="Floral arrangement No. ${n}" loading="lazy"><span class="cap">FLORAL ${n}</span>`;
+    d.addEventListener('click', () => open(i - 1));
+    gallery.appendChild(d);
+  }
+  const lb = document.getElementById('lightbox'), img = document.getElementById('lbImg'), cap = document.getElementById('lbCap');
+  let cur = 0;
+  function show(i) { cur = (i + N) % N; const n = String(cur + 1).padStart(2, '0'); img.src = `flower/flower-${n}.jpg`; img.alt = `Floral arrangement No. ${n}`; cap.textContent = `FLORAL ${n} / ${N}`; }
+  function open(i) { show(i); lb.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  function close() { lb.classList.remove('open'); document.body.style.overflow = ''; }
+  document.getElementById('lbClose').addEventListener('click', close);
+  document.getElementById('lbPrev').addEventListener('click', () => show(cur - 1));
+  document.getElementById('lbNext').addEventListener('click', () => show(cur + 1));
+  lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
+  document.addEventListener('keydown', (e) => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') show(cur - 1);
+    if (e.key === 'ArrowRight') show(cur + 1);
+  });
+</script>
 </body>
 </html>
