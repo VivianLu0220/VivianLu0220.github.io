@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DPO vs. GRPO: Teaching a Small Model to Write Efficient SQL — Jiawei Lu</title>
+  <meta name="description" content="What broke, what worked, and why we needed both preference learning and execution-aware RL to get Qwen3-4B to stop writing correct-but-slow queries." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site.css">
+  <style>
+
+  .wrapper { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; padding: 16vh var(--pad) 10vh; }
+  .back-link { display: inline-block; font-size: 10.5px; letter-spacing: 0.12em; color: var(--fg-3); margin-bottom: 30px; }
+  .back-link:hover { color: var(--accent-hot); }
+  .post-header { border-bottom: 1px solid var(--line); padding-bottom: 30px; margin-bottom: 40px; }
+  .post-meta-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; font-size: 10.5px; letter-spacing: 0.12em; color: #7c7974; }
+  .post-tag { color: var(--accent); text-transform: uppercase; }
+  .post-header h1 { margin: 0; font-family: var(--sans-zh); font-weight: 700; font-size: clamp(26px, 3.6vw, 44px); letter-spacing: -0.03em; line-height: 1.2; color: #f4f2ef; }
+  article { font-family: var(--sans-zh); font-weight: 300; font-size: 14.5px; line-height: 1.95; color: var(--fg-2); }
+  html.lang-en article, html[lang="en"] article { font-family: var(--sans-en); font-weight: 400; line-height: 1.85; }
+  article p { margin: 0 0 22px; }
+  article h2 { margin: 44px 0 14px; font-family: var(--sans-zh); font-weight: 500; font-size: 22px; color: #f4f2ef; letter-spacing: -0.02em; }
+  article h3 { margin: 30px 0 10px; font-size: 16px; font-weight: 500; color: #f4f2ef; }
+  article ul, article ol { margin: 0 0 22px; padding-left: 20px; }
+  article li { margin-bottom: 8px; }
+  article li::marker { color: var(--accent); }
+  article code { font-family: var(--mono); font-size: 0.86em; background: rgba(255,255,255,0.05); border: 1px solid var(--line-soft); padding: 1px 6px; color: #f2f0ed; }
+  article pre { background: rgba(10,10,14,0.82); border: 1px solid var(--line); padding: 16px 18px; overflow-x: auto; font-size: 12.5px; line-height: 1.7; margin: 0 0 22px; }
+  article pre code { background: none; border: none; padding: 0; }
+  article strong { color: #f2f0ed; font-weight: 500; }
+  article a { border-bottom: 1px solid oklch(0.6 0.1 var(--em-h) / 0.4); }
+  article table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 0 0 22px; }
+  article th, article td { border: 1px solid var(--line-soft); padding: 8px 10px; text-align: left; }
+  article th { color: var(--accent); font-weight: 500; font-size: 11px; letter-spacing: 0.1em; }
+  .callout { border-left: 2px solid var(--accent); background: oklch(0.6 0.12 var(--em-h) / 0.08); padding: 16px 20px; margin: 26px 0; font-size: 13.5px; }
+  .report-link { display: inline-block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; border: 1px solid oklch(0.6 0.1 var(--em-h) / 0.42); padding: 10px 16px; margin-top: 8px; }
+  .report-link:hover { border-color: var(--accent); }
+  .post-footer { margin-top: 50px; padding-top: 26px; border-top: 1px solid var(--line); }
+
+</style>
+</head>
+<body data-noise-mode="traffic" data-noise-chaos="0.3" data-noise-dropouts="off">
+<canvas data-noise></canvas>
+<div data-veil></div>
+
+  <nav class="top chrome">
+  <span class="dot"></span>
+  <a href="../index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
+  <a href="../cv.html"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
+  <a href="../flowers.html"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
+  <a href="../chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
+  <a href="../blog/index.html" class="active opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
+</nav>
+<div class="controls">
+  <a class="chrome" href="nl2sql-dpo-grpo-zh.html" style="padding: 8px 12px; color: #75726e;">中文版</a>
+  <div class="lang chrome">
+    <button data-lang-btn="zh">中文</button>
+    <button data-lang-btn="en">EN</button>
+  </div>
+</div>
+
+  <div class="wrapper">
+    <a class="back-link" href="index.html">← All posts</a>
+
+    <div class="post-header">
+      <div class="post-meta-row">
+        <span class="post-date">Dec 2025</span>
+        <span class="post-tag">Fine-tuning</span>
+      </div>
+      <h1>DPO vs. GRPO: Teaching a Small Model to Write Efficient SQL</h1>
+    </div>
+
+    <article>
+      <p>
+        For a Columbia NLP course project, my group fine-tuned Qwen3-4B-Instruct on the BIRD benchmark with
+        a fairly narrow goal: not just correct SQL, but <em>fast</em> SQL. A model that returns the right rows
+        via a three-way self-join when an indexed lookup would do is "correct" by execution-accuracy metrics
+        and useless in production. That distinction — correctness vs. efficiency — is where most of the
+        interesting problems showed up.
+      </p>
+
+      <h2>Why one alignment stage wasn't enough</h2>
+      <p>
+        Our first instinct was to just run DPO on pairs of efficient vs. inefficient SQL for the same question
+        and call it done. DPO is cheap, stable, and doesn't require an online rollout loop — you curate pairs
+        once and train offline. It worked, to a point: the model learned general stylistic preferences
+        (avoid unnecessary subqueries, prefer joins over correlated subqueries where equivalent) reasonably well.
+      </p>
+      <p>
+        What it didn't do well was generalize to <em>query shapes we hadn't paired</em>. DPO optimizes relative
+        preference between two specific completions — it has no signal about what happens when you actually
+        <em>run</em> the query. A model can learn "pattern A looks more like the efficient examples than pattern B"
+        without any grounding in whether pattern A is actually faster on a given schema and data distribution.
+        Preference pairs are a proxy for efficiency, not efficiency itself.
+      </p>
+
+      <h2>Adding execution-aware RL — and immediately regretting the naive version</h2>
+      <p>
+        The fix was a second stage: GRPO-style reinforcement learning with a reward built directly from execution
+        — actually running the generated SQL and measuring latency, alongside correctness. This closes the gap
+        DPO leaves open, because now the model gets gradient signal from ground truth about what's actually fast,
+        not just "faster-looking."
+      </p>
+      <div class="callout">
+        The first reward function we tried was naive: correctness bonus plus a latency penalty. It immediately
+        started reward hacking in a way that's obvious in hindsight — the model found that returning
+        empty result sets or overly restrictive <code>WHERE</code> clauses executes very fast and sometimes
+        still passes loose correctness checks on certain query types. Fast and wrong scored better than
+        slow and right until we tightened the correctness gate to be a hard filter (zero reward if incorrect,
+        rather than a soft penalty) before latency ever entered the reward calculation.
+      </div>
+      <p>
+        That's the core lesson from stacking DPO and GRPO: <strong>the reward for the online stage has to be
+        adversarially robust before you scale it up</strong>, because RL will find the shortest path to a high
+        reward, not the path you intended. A correctness-gated reward — where efficiency only matters at all
+        once correctness is satisfied — was non-negotiable, not an optimization.
+      </p>
+
+      <h2>DPO's stability vs. GRPO's variance</h2>
+      <p>
+        Practically, the two stages felt very different to run. DPO training was stable — loss curves behaved,
+        no reward collapse, easy to reproduce. GRPO was noisier: reward variance across rollout groups was high
+        early in training, and it took more careful reward normalization (group-relative advantage, per the
+        GRPO formulation) to keep updates from being dominated by a few outlier rollouts with unusually fast
+        or unusually broken queries.
+      </p>
+      <p>
+        Running DPO first and GRPO second wasn't arbitrary — it mattered in that order. DPO gave the policy a
+        reasonable starting distribution over "SQL that looks efficient," which meant GRPO's rollouts started
+        from a saner place and needed fewer steps to converge, and reward variance from truly degenerate outputs
+        (the empty-result-set problem above) was already partially suppressed before online RL even started
+        putting pressure on the reward.
+      </p>
+
+      <h2>What it added up to</h2>
+      <p>
+        The combined DPO → GRPO pipeline got a 7% improvement in execution accuracy and Relative Valid
+        Efficiency Score (R-VES) over baseline on the BIRD Mini-Dev set. The qualitative error analysis
+        afterward showed the remaining failures clustering around genuinely hard query structures — deeply
+        nested aggregations, multi-table joins with ambiguous column references — rather than the "technically
+        correct but absurdly inefficient" pattern we started with. That shift is really the whole point: preference
+        learning alone gets you stylistic efficiency, execution-aware RL gets you actual efficiency, and you
+        need the correctness gate to keep the second stage honest.
+      </p>
+
+      <a class="report-link" href="../../nl2sql_report.pdf" target="_blank">Full project report →</a>
+    </article>
+
+    <div class="post-footer">
+      <a class="back-link" href="index.html">← All posts</a>
+    </div>
+  </div>
+
+<script src="../mind-noise.js"></script>
+<script src="../site.js"></script>
+</body>
+</html>

@@ -222,6 +222,16 @@
       background: linear-gradient(160deg, #F2EDE8 0%, #E8D5C8 50%, #D4C9BB 100%);
     }
 
+    /* Wild card */
+    .card-wild .card-bg {
+      background: #0b0b0f;
+      background-image: radial-gradient(circle at 30% 30%, rgba(120,140,255,0.35) 0, transparent 40%), radial-gradient(circle at 70% 70%, rgba(200,120,255,0.3) 0, transparent 45%);
+    }
+    .card-wild .card-title, .card-wild .card-number, .card-wild .card-desc, .card-wild .card-arrow { color: #e8e6e3; }
+    .card-wild .card-tag { color: #9fb0ff; }
+    @keyframes wildGlitch { 0%,92%,100% { transform: none; } 94% { transform: translate(-2px,1px); } 96% { transform: translate(2px,-1px); } 98% { transform: none; } }
+    .card-wild .card-title { animation: wildGlitch 7s linear infinite; }
+
     /* Chat card */
     .card-chat .card-bg {
       background: linear-gradient(160deg, #EDE8F2 0%, #DDD0E8 50%, #C9C0DB 100%);
@@ -333,6 +343,7 @@
       <a href="cv.html">CV</a>
       <a href="flowers.html">Flowers</a>
       <a href="chat.html">Chat</a>
+      <a href="wild/index.html">狂野 UI 版</a>
     </div>
   </nav>
 
@@ -413,6 +424,17 @@
         <p class="card-number">03</p>
         <h2 class="card-title">Chat<br />with Me</h2>
         <p class="card-desc">An AI Jiawei · under construction</p>
+      </div>
+    </a>
+
+    <a href="wild/index.html" class="card card-wild">
+      <div class="card-bg"></div>
+      <div class="card-tag">Experimental</div>
+      <div class="card-arrow">↗</div>
+      <div class="card-content">
+        <p class="card-number">04</p>
+        <h2 class="card-title">狂野<br />UI 版</h2>
+        <p class="card-desc">同样的内容 · 另一种脑子 · 会动</p>
       </div>
     </a>
 

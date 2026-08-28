@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DPO vs. GRPO：教小模型写「高效」SQL — Jiawei Lu</title>
+  <meta name="description" content="哪里翻车、哪里奏效，以及为什么我们需要同时用偏好学习和感知执行效果的强化学习，才能让 Qwen3-4B 别再写「对但慢」的查询。" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site.css">
+  <style>
+
+  .wrapper { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; padding: 16vh var(--pad) 10vh; }
+  .back-link { display: inline-block; font-size: 10.5px; letter-spacing: 0.12em; color: var(--fg-3); margin-bottom: 30px; }
+  .back-link:hover { color: var(--accent-hot); }
+  .post-header { border-bottom: 1px solid var(--line); padding-bottom: 30px; margin-bottom: 40px; }
+  .post-meta-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; font-size: 10.5px; letter-spacing: 0.12em; color: #7c7974; }
+  .post-tag { color: var(--accent); text-transform: uppercase; }
+  .post-header h1 { margin: 0; font-family: var(--sans-zh); font-weight: 700; font-size: clamp(26px, 3.6vw, 44px); letter-spacing: -0.03em; line-height: 1.2; color: #f4f2ef; }
+  article { font-family: var(--sans-zh); font-weight: 300; font-size: 14.5px; line-height: 1.95; color: var(--fg-2); }
+  html.lang-en article, html[lang="en"] article { font-family: var(--sans-en); font-weight: 400; line-height: 1.85; }
+  article p { margin: 0 0 22px; }
+  article h2 { margin: 44px 0 14px; font-family: var(--sans-zh); font-weight: 500; font-size: 22px; color: #f4f2ef; letter-spacing: -0.02em; }
+  article h3 { margin: 30px 0 10px; font-size: 16px; font-weight: 500; color: #f4f2ef; }
+  article ul, article ol { margin: 0 0 22px; padding-left: 20px; }
+  article li { margin-bottom: 8px; }
+  article li::marker { color: var(--accent); }
+  article code { font-family: var(--mono); font-size: 0.86em; background: rgba(255,255,255,0.05); border: 1px solid var(--line-soft); padding: 1px 6px; color: #f2f0ed; }
+  article pre { background: rgba(10,10,14,0.82); border: 1px solid var(--line); padding: 16px 18px; overflow-x: auto; font-size: 12.5px; line-height: 1.7; margin: 0 0 22px; }
+  article pre code { background: none; border: none; padding: 0; }
+  article strong { color: #f2f0ed; font-weight: 500; }
+  article a { border-bottom: 1px solid oklch(0.6 0.1 var(--em-h) / 0.4); }
+  article table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 0 0 22px; }
+  article th, article td { border: 1px solid var(--line-soft); padding: 8px 10px; text-align: left; }
+  article th { color: var(--accent); font-weight: 500; font-size: 11px; letter-spacing: 0.1em; }
+  .callout { border-left: 2px solid var(--accent); background: oklch(0.6 0.12 var(--em-h) / 0.08); padding: 16px 20px; margin: 26px 0; font-size: 13.5px; }
+  .report-link { display: inline-block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; border: 1px solid oklch(0.6 0.1 var(--em-h) / 0.42); padding: 10px 16px; margin-top: 8px; }
+  .report-link:hover { border-color: var(--accent); }
+  .post-footer { margin-top: 50px; padding-top: 26px; border-top: 1px solid var(--line); }
+
+</style>
+</head>
+<body data-noise-mode="traffic" data-noise-chaos="0.3" data-noise-dropouts="off">
+<canvas data-noise></canvas>
+<div data-veil></div>
+
+  <nav class="top chrome">
+  <span class="dot"></span>
+  <a href="../index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
+  <a href="../cv.html"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
+  <a href="../flowers.html"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
+  <a href="../chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
+  <a href="../blog/index.html" class="active opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
+</nav>
+<div class="controls">
+  <a class="chrome" href="nl2sql-dpo-grpo-en.html" style="padding: 8px 12px; color: #75726e;">EN VERSION</a>
+  <div class="lang chrome">
+    <button data-lang-btn="zh">中文</button>
+    <button data-lang-btn="en">EN</button>
+  </div>
+</div>
+
+  <div class="wrapper">
+    <a class="back-link" href="index.html">← 所有文章</a>
+
+    <div class="post-header">
+      <div class="post-meta-row">
+        <span class="post-date">2025 年 12 月</span>
+        <span class="post-tag">Fine-tuning</span>
+      </div>
+      <h1>DPO vs. GRPO：教小模型写「高效」SQL</h1>
+    </div>
+
+    <article>
+      <p>
+        在哥大的一门 NLP 课程项目里，我们组在 BIRD benchmark 上微调了 Qwen3-4B-Instruct，目标其实很窄：
+        不只是写出「对」的 SQL，而是写出「快」的 SQL。一个用三表自连接查出正确结果、而本该用一次索引查找就搞定的模型，
+        按 execution accuracy 这类指标看是「对」的，但放到生产环境里就是没用的东西。「正确」和「高效」之间的这道缝隙，
+        正是这个项目里大部分有意思的问题冒出来的地方。
+      </p>
+
+      <h2>为什么一个对齐阶段不够用</h2>
+      <p>
+        我们最初的直觉是：只对同一个问题的高效 vs. 低效 SQL 做 DPO，训完就完事了。DPO 便宜、稳定，
+        也不需要在线 rollout 循环——你只要提前整理好偏好对，离线训练就行。这个做法确实有效，但也就到某个程度：
+        模型学到了一些相当靠谱的风格偏好（避免不必要的子查询、能用 join 就不用相关子查询）。
+      </p>
+      <p>
+        它没学好的地方，是<em>泛化到我们没有配对过的查询结构</em>上。DPO 优化的是两个具体生成结果之间的相对偏好——
+        它完全没有「这个查询实际跑起来会怎样」的信号。模型可以学会「模式 A 看起来比模式 B 更像高效样本」，
+        却完全没有落地到「模式 A 在给定 schema 和数据分布下是不是真的更快」这件事上。偏好对只是效率的一个代理指标，
+        不是效率本身。
+      </p>
+
+      <h2>加入执行感知的 RL——以及立刻为「naive 版本」后悔</h2>
+      <p>
+        解决办法是加一个第二阶段：GRPO 风格的强化学习，奖励直接从「执行」中构建出来——真正跑一遍生成的 SQL，
+        测量延迟，再结合正确性一起计算。这填上了 DPO 留下的那道缝：现在模型拿到的梯度信号是关于「什么真的快」的真值，
+        而不只是「看起来更快」。
+      </p>
+      <div class="callout">
+        我们第一版奖励函数很朴素：正确性加分，加上延迟惩罚。它几乎立刻就开始 reward hacking，
+        事后想想其实很明显——模型发现返回空结果集，或者写一个过度限制的 <code>WHERE</code> 条件，
+        执行速度非常快，而且在某些查询类型下还能勉强通过比较宽松的正确性检查。「快但错」的得分一度高于
+        「慢但对」，直到我们把正确性检查改成硬性门槛（不正确直接零奖励，而不是软性扣分），
+        并且让延迟只在正确性满足之后才进入奖励计算，这个问题才被解决。
+      </p>
+      <p>
+        这是叠加 DPO 和 GRPO 之后最核心的一条经验：<strong>在线阶段的奖励函数，在你把它规模化之前，
+        必须先具备对抗鲁棒性</strong>，因为强化学习会找到通向高奖励的最短路径，而不是你设想中的那条路径。
+        正确性作为硬门槛——效率只有在正确性满足之后才有意义——这不是一个可选的优化项，而是硬性要求。
+      </p>
+
+      <h2>DPO 的稳定 vs. GRPO 的高方差</h2>
+      <p>
+        实际跑起来，这两个阶段的体感非常不一样。DPO 训练很稳定：loss 曲线表现正常，没有 reward collapse，
+        复现起来也容易。GRPO 就吵得多：训练早期 rollout 组之间的奖励方差很高，需要更细致的奖励归一化
+        （按 GRPO 的公式做组内相对 advantage 计算），才能防止更新被少数几个异常快或者彻底跑崩的 rollout 主导。
+      </p>
+      <p>
+        先跑 DPO 再跑 GRPO 这个顺序不是随便定的——顺序本身很重要。DPO 给了策略一个相对合理的初始分布，
+        让它对「看起来高效的 SQL」有基本认知，这意味着 GRPO 的 rollout 从一个更靠谱的起点开始，
+        收敛所需的步数更少；而且像上面提到的空结果集这种明显退化的输出，在在线 RL 真正开始对奖励施压之前，
+        就已经被部分抑制掉了。
+      </p>
+
+      <h2>最后落地成了什么</h2>
+      <p>
+        DPO → GRPO 的组合 pipeline 在 BIRD Mini-Dev 集上，相对 baseline 在 execution accuracy 和
+        Relative Valid Efficiency Score (R-VES) 上取得了 7% 的提升。之后的定性错误分析显示，
+        剩下的失败案例主要集中在真正困难的查询结构上——深度嵌套的聚合、列引用有歧义的多表 join——
+        而不再是我们最初那种「技术上正确但荒谬低效」的模式。这个转变其实就是整件事的意义所在：
+        单靠偏好学习能拿到「风格上的高效」，执行感知的 RL 才能拿到「真正的高效」，
+        而正确性门槛则是保证第二阶段不作弊的前提。
+      </p>
+
+      <a class="report-link" href="../../nl2sql_report.pdf" target="_blank">完整项目报告 →</a>
+    </article>
+
+    <div class="post-footer">
+      <a class="back-link" href="index.html">← 所有文章</a>
+    </div>
+  </div>
+
+<script src="../mind-noise.js"></script>
+<script src="../site.js"></script>
+</body>
+</html>

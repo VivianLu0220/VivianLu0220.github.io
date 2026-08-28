@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>为 LLM 数据清洗设计多模型路由 Pipeline — Jiawei Lu</title>
+  <meta name="description" content="在阶跃星辰搭建 GPT / Claude / Qwen 路由系统的笔记：异步执行、本地并行化，以及一个改变了我们调用每个模型方式的 prompt 位置发现。" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site.css">
+  <style>
+
+  .wrapper { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; padding: 16vh var(--pad) 10vh; }
+  .back-link { display: inline-block; font-size: 10.5px; letter-spacing: 0.12em; color: var(--fg-3); margin-bottom: 30px; }
+  .back-link:hover { color: var(--accent-hot); }
+  .post-header { border-bottom: 1px solid var(--line); padding-bottom: 30px; margin-bottom: 40px; }
+  .post-meta-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; font-size: 10.5px; letter-spacing: 0.12em; color: #7c7974; }
+  .post-tag { color: var(--accent); text-transform: uppercase; }
+  .post-header h1 { margin: 0; font-family: var(--sans-zh); font-weight: 700; font-size: clamp(26px, 3.6vw, 44px); letter-spacing: -0.03em; line-height: 1.2; color: #f4f2ef; }
+  article { font-family: var(--sans-zh); font-weight: 300; font-size: 14.5px; line-height: 1.95; color: var(--fg-2); }
+  html.lang-en article, html[lang="en"] article { font-family: var(--sans-en); font-weight: 400; line-height: 1.85; }
+  article p { margin: 0 0 22px; }
+  article h2 { margin: 44px 0 14px; font-family: var(--sans-zh); font-weight: 500; font-size: 22px; color: #f4f2ef; letter-spacing: -0.02em; }
+  article h3 { margin: 30px 0 10px; font-size: 16px; font-weight: 500; color: #f4f2ef; }
+  article ul, article ol { margin: 0 0 22px; padding-left: 20px; }
+  article li { margin-bottom: 8px; }
+  article li::marker { color: var(--accent); }
+  article code { font-family: var(--mono); font-size: 0.86em; background: rgba(255,255,255,0.05); border: 1px solid var(--line-soft); padding: 1px 6px; color: #f2f0ed; }
+  article pre { background: rgba(10,10,14,0.82); border: 1px solid var(--line); padding: 16px 18px; overflow-x: auto; font-size: 12.5px; line-height: 1.7; margin: 0 0 22px; }
+  article pre code { background: none; border: none; padding: 0; }
+  article strong { color: #f2f0ed; font-weight: 500; }
+  article a { border-bottom: 1px solid oklch(0.6 0.1 var(--em-h) / 0.4); }
+  article table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 0 0 22px; }
+  article th, article td { border: 1px solid var(--line-soft); padding: 8px 10px; text-align: left; }
+  article th { color: var(--accent); font-weight: 500; font-size: 11px; letter-spacing: 0.1em; }
+  .callout { border-left: 2px solid var(--accent); background: oklch(0.6 0.12 var(--em-h) / 0.08); padding: 16px 20px; margin: 26px 0; font-size: 13.5px; }
+  .report-link { display: inline-block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; border: 1px solid oklch(0.6 0.1 var(--em-h) / 0.42); padding: 10px 16px; margin-top: 8px; }
+  .report-link:hover { border-color: var(--accent); }
+  .post-footer { margin-top: 50px; padding-top: 26px; border-top: 1px solid var(--line); }
+
+</style>
+</head>
+<body data-noise-mode="traffic" data-noise-chaos="0.3" data-noise-dropouts="off">
+<canvas data-noise></canvas>
+<div data-veil></div>
+
+  <nav class="top chrome">
+  <span class="dot"></span>
+  <a href="../index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
+  <a href="../cv.html"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
+  <a href="../flowers.html"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
+  <a href="../chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
+  <a href="../blog/index.html" class="active opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
+</nav>
+<div class="controls">
+  <a class="chrome" href="multi-model-routing-en.html" style="padding: 8px 12px; color: #75726e;">EN VERSION</a>
+  <div class="lang chrome">
+    <button data-lang-btn="zh">中文</button>
+    <button data-lang-btn="en">EN</button>
+  </div>
+</div>
+
+  <div class="wrapper">
+    <a class="back-link" href="index.html">← 所有文章</a>
+
+    <div class="post-header">
+      <div class="post-meta-row">
+        <span class="post-date">2025 年 8 月</span>
+        <span class="post-tag">LLM Pipelines</span>
+      </div>
+      <h1>为 LLM 数据清洗设计多模型路由 Pipeline</h1>
+    </div>
+
+    <article>
+      <p>
+        在阶跃星辰实习时，我的工作之一是把相声录音——一种非常特定、非常「中国式」的对话喜剧形式——转化成能拿去训练模型的高质量对话数据。
+        整个 pipeline 分三个阶段：基于规则的过滤、LLM-as-a-judge 分类、人工抽检。真正让「多模型路由」变成一个需要认真设计的工程问题，
+        而不是随便调一次 <code>openai.ChatCompletion.create()</code> 的地方，就在中间这一步。
+      </p>
+
+      <h2>为什么要在多个模型之间路由</h2>
+      <p>
+        最朴素的做法是选定一个模型、写好 prompt、跑到底——但这个做法在处理 1 万多条原始对话、
+        还要拿真实标注去评估 judge 质量的时候会很快崩掉。我们当时在 GPT、Claude、Qwen 之间做对比，
+        它们各自的速率限制、延迟表现、以及在处理杂乱口语化中文对话时的失败模式都不一样。如果一开始就锁死一个模型，
+        之后每次发现更好的 judge，都得把整条 pipeline 重跑一遍。
+      </p>
+      <p>
+        所以这个 pipeline 从设计之初就是模型无关的：一层很薄的路由层，接收 prompt 模板和目标模型标识符，
+        统一响应格式，无论哪个后端返回结果都做同样的日志记录。这个抽象层听起来不起眼，但正是它让我们可以随时换 judge，
+        而完全不用碰过滤逻辑本身。
+      </p>
+
+      <h2>两个完全不同的并行化问题</h2>
+      <p>
+        实际上这里有两个不同的「速度」问题，如果把它们混为一谈，两边都会做得更差：
+      </p>
+      <ul>
+        <li>
+          <strong>生产吞吐量</strong>——用选定的 judge 模型跑完整个数据集。这里的瓶颈是 API 往返延迟，不是算力。
+          用异步执行（asyncio + 针对每个供应商速率限制的有界信号量）替代同步调用，让我们拿到了大约
+          <strong>5 倍</strong>的提速，纯粹是因为不再让程序在等待网络 I/O 时空转。
+        </li>
+        <li>
+          <strong>实验吞吐量</strong>——把三个候选模型都跑一遍同一批样本，用来对比 judge 质量。
+          这个任务在模型维度和样本维度上都是天然可并行的，所以用本地并行化（跨 CPU 核心的多进程，因为大部分时间是很多并发连接在等网络 I/O）
+          让对比跑批速度提升了接近<strong>10 倍</strong>。
+        </li>
+      </ul>
+      <p>
+        这里的经验是：「让它更快」根本不是一个问题。生产吞吐量和实验吞吐量的瓶颈不一样，需要的解法也不一样。
+        异步并发解决的是 I/O 空转；本地并行解决的是同时向多个模型扇出请求时，CPU 密集的调度开销。
+        把错误的解法用在错误的问题上，只会用更高的复杂度换来更小的收益。
+      </p>
+
+      <h2>一个没人提前提醒你的 prompt 位置发现</h2>
+      <p>
+        真正改变了我们写 prompt 方式的地方是：我们对「指令到底该放在 <code>system</code> 角色还是
+        <code>user</code> 角色」做了消融实验，结果发现最优位置在不同模型之间并不一致。
+      </p>
+      <div class="callout">
+        有些模型几乎把 system prompt 当「圣旨」，放在这里的格式指令遵循度比放在 user 轮次里高得多。
+        另一些模型似乎更看重 user 轮次里的任务指令，放在那里的指令「声音更大」——但代价是有时会盖过我们嵌在
+        user 轮次里的 few-shot 示例，导致模型没能好好follow这些示例。
+      </div>
+      <p>
+        这意味着我们的 prompt 模板不能是一套字符串直接套用到所有供应商上——每个模型都需要一套单独的注入策略。
+        这是个很小的细节，但恰恰是那种要等你把同一个任务跑在多个模型上、开始逐条对比失败案例时才会浮出水面的东西。
+        如果你在做任何跨供应商路由的系统，建议尽早留出时间做这个消融实验；等 pipeline 已经默认了统一格式之后再返工，
+        会很麻烦。
+      </p>
+
+      <h2>最后落地成了什么</h2>
+      <p>
+        这套三阶段 pipeline 把原始的 1 万多条对话筛到了大约 6000 条金标准样本，密度不够、直接用没意义的对话段落
+        则通过 few-shot 引导的改写来补齐。这批清洗后的数据集在内部推理和语言能力基准上贡献了 6-7 个百分点的提升，
+        足以达到消费级部署的门槛。如果不是把「谁来当 judge」和「怎么跑得更快」当成两个各自独立、认真解决的问题，
+        在我们需要的这个数据量级下，这一切根本不可能做到。
+      </p>
+    </article>
+
+    <div class="post-footer">
+      <a class="back-link" href="index.html">← 所有文章</a>
+    </div>
+  </div>
+
+<script src="../mind-noise.js"></script>
+<script src="../site.js"></script>
+</body>
+</html>

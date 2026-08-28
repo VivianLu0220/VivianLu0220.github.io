@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog — Jiawei Lu</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site.css">
+<style>
+  .post { display: block; padding: 30px 8px; border-top: 1px solid var(--line-soft); color: inherit; transition: background .3s; }
+  .post:last-child { border-bottom: 1px solid var(--line-soft); }
+  .post:hover { background: rgba(255,255,255,0.02); color: inherit; }
+  .post .meta { display: flex; gap: 14px; font-size: 10.5px; letter-spacing: 0.12em; color: #7c7974; margin-bottom: 12px; }
+  .post .meta .tag { color: var(--accent); }
+  .post h2 { margin: 0 0 10px; font-family: var(--sans-zh); font-size: clamp(20px, 2.1vw, 30px); font-weight: 500; letter-spacing: -0.02em; color: #f4f2ef; }
+  .post p { margin: 0; max-width: 720px; font-size: 13.5px; }
+  .post .arrow { display: inline-block; margin-top: 14px; font-size: 10.5px; letter-spacing: 0.1em; color: var(--accent); }
+</style>
+</head>
+<body data-noise-mode="traffic" data-noise-chaos="0.4">
+
+<canvas data-noise></canvas>
+<div data-veil></div>
+
+<nav class="top chrome">
+  <span class="dot"></span>
+  <a href="../index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
+  <a href="../cv.html"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
+  <a href="../flowers.html"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
+  <a href="../chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
+  <a href="index.html" class="active opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
+</nav>
+<div class="controls">
+  <div class="lang chrome">
+    <button data-lang-btn="zh">中文</button>
+    <button data-lang-btn="en">EN</button>
+  </div>
+</div>
+
+<main class="page">
+  <div class="sec-head">
+    <div class="eyebrow"><span data-lang="zh">笔记</span><span data-lang="en">NOTES</span></div>
+    <div class="rule"></div>
+    <div class="hint" data-mood-readout>DRIFTING · 走神</div>
+  </div>
+
+  <h1 class="display" style="font-size: clamp(34px, 5vw, 72px);">
+    <span class="zh-head" data-lang="zh" data-restless-item>做的时候</span>
+    <span class="it" data-lang="zh" data-restless-item data-glitch>顺手记的</span>
+    <span class="en-head" data-lang="en" data-restless-item>Write-ups</span>
+    <span class="it" data-lang="en" data-restless-item data-glitch>from the build</span>
+  </h1>
+  <p class="zh-body lede" data-lang="zh">项目里的设计笔记和踩坑记录，放不进简历一行字的那些。</p>
+  <p class="en-body lede" data-lang="en">Design notes and postmortems from things I've shipped — the parts that don't fit in a resume bullet.</p>
+
+  <a class="post" data-slug="nl2sql-dpo-grpo" href="nl2sql-dpo-grpo-zh.html">
+    <div class="meta"><span>2025.12</span><span class="tag">FINE-TUNING</span></div>
+    <h2 data-lang="zh">DPO vs. GRPO：教小模型写「高效」SQL</h2>
+    <h2 data-lang="en">DPO vs. GRPO: Teaching a Small Model to Write Efficient SQL</h2>
+    <p class="zh-body" data-lang="zh">哪里翻车、哪里奏效，以及为什么要同时用偏好学习和执行感知的强化学习，Qwen3-4B 才不再写「对但慢」的查询。</p>
+    <p class="en-body" data-lang="en">What broke, what worked, and why we needed both preference learning and execution-aware RL to get Qwen3-4B to stop writing correct-but-slow queries.</p>
+    <span class="arrow"><span data-lang="zh">阅读 →</span><span data-lang="en">READ →</span></span>
+  </a>
+
+  <a class="post" data-slug="multi-model-routing" href="multi-model-routing-zh.html">
+    <div class="meta"><span>2025.08</span><span class="tag">LLM PIPELINES</span></div>
+    <h2 data-lang="zh">为 LLM 数据清洗设计多模型路由 Pipeline</h2>
+    <h2 data-lang="en">Designing a Multi-Model Routing Pipeline for LLM Data Curation</h2>
+    <p class="zh-body" data-lang="zh">在阶跃星辰搭 GPT / Claude / Qwen 路由的笔记：异步执行、本地并行，还有一个改变了我们调用每个模型方式的 prompt 位置发现。</p>
+    <p class="en-body" data-lang="en">Notes from building a GPT/Claude/Qwen routing system at Stepfun — async execution, local parallelisation, and a prompt-placement finding that changed how we called every model.</p>
+    <span class="arrow"><span data-lang="zh">阅读 →</span><span data-lang="en">READ →</span></span>
+  </a>
+</main>
+
+<footer class="bar">
+  <span>JIAWEI LU · NOTES</span>
+  <span data-mood-readout>DRIFTING · 走神</span>
+  <span><a href="../index.html">← <span data-lang="zh">首页</span><span data-lang="en">HOME</span></a></span>
+</footer>
+
+<script src="../mind-noise.js"></script>
+<script src="../site.js"></script>
+<script>
+  const posts = document.querySelectorAll('.post[data-slug]');
+  const sync = () => posts.forEach((a) => { a.href = `${a.dataset.slug}-${window.siteLang()}.html`; });
+  document.addEventListener('langchange', sync);
+  sync();
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wiring — Jiawei Lu</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<style>
+  .prose p { font-size: 15px; margin: 0 0 22px; }
+  .signage { display: flex; gap: 8px; flex-wrap: wrap; margin: 30px 0; font-size: 9.5px; letter-spacing: 0.14em; }
+  .signage span { border: 1px solid oklch(0.55 0.07 var(--em-h) / 0.3); padding: 5px 9px; color: var(--accent); }
+</style>
+</head>
+<body data-noise-mode="swarm" data-noise-chaos="0.5">
+
+<canvas data-noise></canvas>
+<div data-veil></div>
+
+<nav class="top chrome">
+  <span class="dot"></span>
+  <a href="index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
+  <a href="cv.html"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
+  <a href="flowers.html"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
+  <a href="chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
+  <a href="blog/index.html" class="opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
+</nav>
+<div class="controls">
+  <div class="lang chrome">
+    <button data-lang-btn="zh">中文</button>
+    <button data-lang-btn="en">EN</button>
+  </div>
+</div>
+
+<main class="page narrow">
+  <div class="sec-head">
+    <div class="eyebrow"><span data-lang="zh">说明 — 这个网站</span><span data-lang="en">NOTE — ABOUT THIS SITE</span></div>
+    <div class="rule"></div>
+    <div class="hint" data-mood-readout>DRIFTING · 走神</div>
+  </div>
+
+  <h1 class="display" style="font-size: clamp(34px, 5vw, 72px);">
+    <span class="zh-head" data-lang="zh" data-restless-item>页面会动</span>
+    <span class="it" data-lang="zh" data-restless-item data-glitch>是故意的</span>
+    <span class="en-head" data-lang="en" data-restless-item>The restlessness</span>
+    <span class="it" data-lang="en" data-restless-item data-glitch>is deliberate</span>
+  </h1>
+
+  <div class="prose zh-body" data-lang="zh">
+    <p>我脑子里一般同时开着好几件事。有时候是在跑的模型，有时候是还没决定怎么插的一束花，有时候就是噪声。</p>
+    <p>这个网站也是这么排的。背景一直在动，字会轻微漂，隔几秒会暗一下——那是走神。鼠标靠近的东西会清楚，离远的会糊，跟注意力差不多。</p>
+    <div class="signage"><span>ADHD</span><span>ANXIETY</span><span>DEPRESSION</span></div>
+    <p>这三个词放在这里是背景，不是主题。有的日子页面跑得快，有的日子慢一点，都正常。</p>
+    <p>简历那页故意做得清楚，招人的人十秒钟能找到要看的东西。其他部分是氛围，不是地图。</p>
+    <p style="color: var(--fg-4); font-size: 12px;">技术上：纯静态 HTML，没有框架。背景是一个 canvas 粒子场，颜色随一个 40 秒的周期在色相上转，页面上所有强调色都跟着这个变量走。聊天页后面是一个 Cloudflare Worker 和一个 HF Space。</p>
+  </div>
+  <div class="prose en-body" data-lang="en">
+    <p>My head usually has several things open at once. Some of them are a model I'm training. Some are a bouquet I'm still deciding on. Some are just noise.</p>
+    <p>This site is laid out the same way. The background keeps moving, the type drifts a little, and every few seconds things dim for a moment — that's attention dropping out. Whatever the cursor is near gets sharp; everything else blurs.</p>
+    <div class="signage"><span>ADHD</span><span>ANXIETY</span><span>DEPRESSION</span></div>
+    <p>Those three are texture here, not the subject. Some days the page runs fast, some days slower. Both are normal.</p>
+    <p>The CV page is deliberately clear, so whoever is hiring can find what they need in ten seconds. The rest is atmosphere, not the map.</p>
+    <p style="color: var(--fg-4); font-size: 12px;">Under the hood: static HTML, no framework. The background is a canvas particle field whose hue cycles over 40 seconds, and every accent colour on the page follows that variable. The chat page talks to a Cloudflare Worker and an HF Space.</p>
+  </div>
+</main>
+
+<footer class="bar">
+  <span>JIAWEI LU · WIRING</span>
+  <span data-mood-readout>DRIFTING · 走神</span>
+  <span><a href="index.html">← <span data-lang="zh">首页</span><span data-lang="en">HOME</span></a></span>
+</footer>
+
+<script src="mind-noise.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

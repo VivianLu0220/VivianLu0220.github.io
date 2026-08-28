@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Designing a Multi-Model Routing Pipeline for LLM Data Curation — Jiawei Lu</title>
+  <meta name="description" content="Notes from building a GPT/Claude/Qwen routing pipeline for LLM training data curation: async execution, local parallelization, and a prompt-placement finding that changed how we called every model." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site.css">
+  <style>
+
+  .wrapper { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; padding: 16vh var(--pad) 10vh; }
+  .back-link { display: inline-block; font-size: 10.5px; letter-spacing: 0.12em; color: var(--fg-3); margin-bottom: 30px; }
+  .back-link:hover { color: var(--accent-hot); }
+  .post-header { border-bottom: 1px solid var(--line); padding-bottom: 30px; margin-bottom: 40px; }
+  .post-meta-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; font-size: 10.5px; letter-spacing: 0.12em; color: #7c7974; }
+  .post-tag { color: var(--accent); text-transform: uppercase; }
+  .post-header h1 { margin: 0; font-family: var(--sans-zh); font-weight: 700; font-size: clamp(26px, 3.6vw, 44px); letter-spacing: -0.03em; line-height: 1.2; color: #f4f2ef; }
+  article { font-family: var(--sans-zh); font-weight: 300; font-size: 14.5px; line-height: 1.95; color: var(--fg-2); }
+  html.lang-en article, html[lang="en"] article { font-family: var(--sans-en); font-weight: 400; line-height: 1.85; }
+  article p { margin: 0 0 22px; }
+  article h2 { margin: 44px 0 14px; font-family: var(--sans-zh); font-weight: 500; font-size: 22px; color: #f4f2ef; letter-spacing: -0.02em; }
+  article h3 { margin: 30px 0 10px; font-size: 16px; font-weight: 500; color: #f4f2ef; }
+  article ul, article ol { margin: 0 0 22px; padding-left: 20px; }
+  article li { margin-bottom: 8px; }
+  article li::marker { color: var(--accent); }
+  article code { font-family: var(--mono); font-size: 0.86em; background: rgba(255,255,255,0.05); border: 1px solid var(--line-soft); padding: 1px 6px; color: #f2f0ed; }
+  article pre { background: rgba(10,10,14,0.82); border: 1px solid var(--line); padding: 16px 18px; overflow-x: auto; font-size: 12.5px; line-height: 1.7; margin: 0 0 22px; }
+  article pre code { background: none; border: none; padding: 0; }
+  article strong { color: #f2f0ed; font-weight: 500; }
+  article a { border-bottom: 1px solid oklch(0.6 0.1 var(--em-h) / 0.4); }
+  article table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 0 0 22px; }
+  article th, article td { border: 1px solid var(--line-soft); padding: 8px 10px; text-align: left; }
+  article th { color: var(--accent); font-weight: 500; font-size: 11px; letter-spacing: 0.1em; }
+  .callout { border-left: 2px solid var(--accent); background: oklch(0.6 0.12 var(--em-h) / 0.08); padding: 16px 20px; margin: 26px 0; font-size: 13.5px; }
+  .report-link { display: inline-block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; border: 1px solid oklch(0.6 0.1 var(--em-h) / 0.42); padding: 10px 16px; margin-top: 8px; }
+  .report-link:hover { border-color: var(--accent); }
+  .post-footer { margin-top: 50px; padding-top: 26px; border-top: 1px solid var(--line); }
+
+</style>
+</head>
+<body data-noise-mode="traffic" data-noise-chaos="0.3" data-noise-dropouts="off">
+<canvas data-noise></canvas>
+<div data-veil></div>
+
+  <nav class="top chrome">
+  <span class="dot"></span>
+  <a href="../index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
+  <a href="../cv.html"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
+  <a href="../flowers.html"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
+  <a href="../chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
+  <a href="../blog/index.html" class="active opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
+</nav>
+<div class="controls">
+  <a class="chrome" href="multi-model-routing-zh.html" style="padding: 8px 12px; color: #75726e;">中文版</a>
+  <div class="lang chrome">
+    <button data-lang-btn="zh">中文</button>
+    <button data-lang-btn="en">EN</button>
+  </div>
+</div>
+
+  <div class="wrapper">
+    <a class="back-link" href="index.html">← All posts</a>
+
+    <div class="post-header">
+      <div class="post-meta-row">
+        <span class="post-date">Aug 2025</span>
+        <span class="post-tag">LLM Pipelines</span>
+      </div>
+      <h1>Designing a Multi-Model Routing Pipeline for LLM Data Curation</h1>
+    </div>
+
+    <article>
+      <p>
+        At Stepfun, part of my job was turning raw crosstalk (相声) recordings — a very specific,
+        very Chinese style of comedic dialogue — into training-quality conversational data.
+        The pipeline had three stages: rule-based filtering, LLM-as-a-judge classification, and a manual
+        spot-check. The middle stage is where multi-model routing became a real engineering problem
+        instead of a single <code>openai.ChatCompletion.create()</code> call.
+      </p>
+
+      <h2>Why route across models at all</h2>
+      <p>
+        The naive approach — pick one model, prompt it, move on — breaks down fast once you're processing
+        10K+ raw dialogues and need to benchmark judge quality against ground truth. We were comparing
+        GPT, Claude, and Qwen as candidate judges, and each had a different rate limit, different latency
+        profile, and different failure modes on messy conversational Chinese. Locking into one model early
+        would have meant re-running the entire pipeline every time we found a better judge.
+      </p>
+      <p>
+        So the pipeline was built model-agnostic from the start: a thin routing layer took a prompt template
+        and a target model identifier, normalized the response format, and logged raw outputs regardless of
+        which backend answered. That abstraction is unglamorous but it's the thing that let us swap judges
+        without touching the filtering logic.
+      </p>
+
+      <h2>Two different parallelization problems</h2>
+      <p>
+        There were actually two distinct speed problems, and conflating them would have made both worse:
+      </p>
+      <ul>
+        <li>
+          <strong>Production throughput</strong> — running the chosen judge model over the full dataset.
+          Here the bottleneck was API round-trip latency, not compute. Async execution (asyncio + a bounded
+          semaphore per provider's rate limit) got us roughly a <strong>5× speedup</strong> over sequential
+          calls, just by not idling on I/O.
+        </li>
+        <li>
+          <strong>Benchmarking throughput</strong> — running all three candidate models over the same sample
+          set to compare judge quality. This is embarrassingly parallel across models and across samples, so
+          local parallelization (multiprocessing across CPU cores, since we were mostly waiting on network I/O
+          across many concurrent connections) got us closer to a <strong>10× speedup</strong> for the
+          comparison runs.
+        </li>
+      </ul>
+      <p>
+        The lesson: "make it faster" isn't one problem. Production throughput and experimentation throughput
+        have different bottlenecks and want different solutions. Async concurrency fixes I/O idling; local
+        parallelism fixes CPU-bound orchestration overhead when you're fanning out to many models at once.
+        Applying the wrong fix to the wrong problem gets you a smaller win for more complexity.
+      </p>
+
+      <h2>The prompt-placement finding nobody warns you about</h2>
+      <p>
+        The part that actually changed how we wrote prompts: we ran ablations on whether instructions belonged
+        in the <code>system</code> role or the <code>user</code> role, and the optimal placement was not consistent
+        across models.
+      </p>
+      <div class="callout">
+        Some models treated the system prompt as close to gospel and would follow formatting instructions there
+        far more reliably than the same instructions placed in the user turn. Others seemed to weight the user
+        turn more heavily for task-specific instructions, and system prompts placed there felt "louder" —
+        occasionally at the cost of following the actual few-shot examples we'd embedded in the user turn.
+      </div>
+      <p>
+        This meant our prompt templates couldn't be a single string swapped across providers — they needed a
+        per-model injection strategy. It's a small thing, but it's exactly the kind of detail that doesn't show
+        up until you're running the same task across multiple models side by side and start diffing failure
+        rates. If you're building anything that routes across providers, budget time for this ablation early;
+        retrofitting per-model prompt strategies after your pipeline assumes one format is annoying.
+      </p>
+
+      <h2>What it added up to</h2>
+      <p>
+        The three-stage pipeline took the raw 10K+ dialogues down to roughly 6K gold-standard samples, with
+        few-shot-guided rewriting filling in gaps where dialogue density was too low to be useful as-is. That
+        curated set contributed a 6–7 point gain on internal reasoning and language benchmarks — enough to
+        clear the bar for consumer deployment. None of that would have been feasible at the volume we needed
+        without treating "which model judges this" and "how fast can we run it" as two separate, deliberately
+        solved problems.
+      </p>
+    </article>
+
+    <div class="post-footer">
+      <a class="back-link" href="index.html">← All posts</a>
+    </div>
+  </div>
+
+<script src="../mind-noise.js"></script>
+<script src="../site.js"></script>
+</body>
+</html>

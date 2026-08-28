@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>约个饭 · Jiawei Lu</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+  <style>
+
+  main { position: relative; z-index: 2; max-width: 680px; margin: 0 auto; padding: 16vh var(--pad) 10vh; }
+  h1 { margin: 0 0 14px; font-family: var(--sans-zh); font-weight: 700; font-size: clamp(32px, 5vw, 64px); letter-spacing: -0.03em; line-height: 1.05; }
+  .subtitle { font-family: var(--sans-zh); font-weight: 300; font-size: 13.5px; line-height: 1.95; color: var(--fg-2); margin: 0 0 40px; }
+  .step-label { font-size: 10px; letter-spacing: 0.24em; color: var(--accent); margin-top: 44px; }
+  h2 { margin: 6px 0 16px; font-family: var(--sans-zh); font-weight: 500; font-size: 22px; color: #f4f2ef; }
+  .group-title { font-size: 10px; letter-spacing: 0.16em; color: var(--fg-4); margin: 14px 0 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip, .slot { font: inherit; font-family: var(--sans-zh); font-size: 12.5px; background: rgba(10,10,14,0.82); border: 1px solid var(--line); color: var(--fg-2); padding: 8px 14px; cursor: pointer; transition: border-color .25s, color .25s; }
+  .chip:hover, .slot:hover { border-color: var(--accent); }
+  .chip.selected, .slot.selected { border-color: var(--accent); background: oklch(0.6 0.12 var(--em-h) / 0.16); color: #f2f0ed; }
+  #otherInput { display: none; margin-top: 12px; }
+  .day { margin-bottom: 20px; }
+  .day-title { font-size: 10.5px; letter-spacing: 0.12em; color: oklch(0.78 0.13 var(--em-h)); margin-bottom: 8px; }
+  .slot-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .slot { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; }
+  .slot.taken { opacity: .35; cursor: not-allowed; text-decoration: line-through; }
+  .slot.taken:hover { border-color: var(--line); }
+  .slot.busy { opacity: .35; cursor: default; border-style: dashed; }
+  .slot.busy:hover { border-color: var(--line); }
+  .empty-hint { font-family: var(--sans-zh); font-weight: 300; font-size: 12.5px; color: var(--fg-4); }
+  #status { margin-top: 12px; font-family: var(--sans-zh); font-size: 12.5px; color: var(--accent-hot); min-height: 1.2em; }
+  .btn.ghost { background: transparent; }
+  .success { text-align: center; padding: 20vh 0; }
+  .success h2 { font-size: 30px; }
+  .success p { font-family: var(--sans-zh); font-weight: 300; line-height: 1.9; color: var(--fg-2); }
+  .admin-card { border: 1px solid var(--line); background: rgba(10,10,14,0.82); padding: 18px 20px; margin-bottom: 12px; }
+  .admin-card .who { font-family: var(--sans-zh); font-size: 15px; margin-bottom: 4px; color: #f4f2ef; }
+  .admin-card .meta { font-family: var(--sans-zh); font-weight: 300; font-size: 12.5px; color: var(--fg-2); line-height: 1.8; white-space: pre-line; }
+  .admin-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .tag { display: inline-block; font-size: 9.5px; letter-spacing: 0.14em; padding: 4px 8px; border: 1px solid; margin-left: 8px; vertical-align: middle; }
+  .tag.pending { color: #d6b25a; border-color: rgba(214,178,90,.4); }
+  .tag.confirmed { color: #8fc48f; border-color: rgba(143,196,143,.4); }
+  .tag.rejected { color: #c97b7b; border-color: rgba(201,123,123,.4); }
+  .slot-admin-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size: 12px; }
+  .add-slot-form { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 24px; }
+  .add-slot-form input { width: auto; flex: 1; min-width: 110px; margin-bottom: 0; }
+  a.cal-link { font-size: 11px; letter-spacing: 0.06em; }
+  footer { position: relative; z-index: 2; text-align: center; padding: 24px 0 40px; font-size: 10px; letter-spacing: 0.16em; color: var(--fg-5); }
+
+</style>
+</head>
+<body data-noise-mode="instrument" data-noise-chaos="0.35" data-noise-dropouts="off">
+<canvas data-noise></canvas>
+<div data-veil></div>
+  <nav class="top chrome">
+  <span class="dot"></span>
+  <a href="index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
+  <a href="cv.html"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
+  <a href="flowers.html"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
+  <a href="chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
+  <a href="blog/index.html" class="opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
+</nav>
+<div class="controls">
+  <div class="lang chrome">
+    <button data-lang-btn="zh">中文</button>
+    <button data-lang-btn="en">EN</button>
+  </div>
+</div>
+
+  <main>
+    <!-- ══ 朋友视图 ══ -->
+    <section id="guestView">
+      <h1>在上海见 ✿</h1>
+      <p class="subtitle">8.11 落地上海。选个想一起干的事，挑个我有空的时间，<br/>给我发邀请 —— 我确认之后就算约上啦。</p>
+
+      <div class="step-label">Step 1</div>
+      <h2>想一起干嘛？</h2>
+      <div id="eventGroups"></div>
+      <input id="otherInput" type="text" placeholder="想干嘛？写在这里" maxlength="50" />
+
+      <div class="step-label">Step 2</div>
+      <h2>挑个时间</h2>
+      <p class="group-title">以下时间均为中国时间（UTC+8）</p>
+      <div id="slotList"><p class="empty-hint">加载中…</p></div>
+
+      <div class="step-label">Step 3</div>
+      <h2>你是谁？</h2>
+      <input id="nameInput" type="text" placeholder="名字（必填）" maxlength="50" />
+      <input id="wechatInput" type="text" placeholder="微信号（方便我找到你）" maxlength="50" />
+      <textarea id="messageInput" placeholder="想说的话（选填）" maxlength="300"></textarea>
+      <button class="btn" id="submitBtn">发送邀请</button>
+      <div id="status"></div>
+    </section>
+
+    <section id="successView" class="success" style="display:none;">
+      <h2>邀请已发送 ✿</h2>
+      <p>我看到之后会尽快确认，<br/>确认了就微信找你！</p>
+    </section>
+
+    <!-- ══ 管理视图（?admin）══ -->
+    <section id="adminView" style="display:none;">
+      <h1>管理约饭</h1>
+      <p class="subtitle">添加空闲时段，处理朋友们的邀请。</p>
+
+      <h2>空闲时段</h2>
+      <div class="add-slot-form">
+        <input id="adminDate" type="date" />
+        <input id="adminStart" type="time" value="18:00" />
+        <input id="adminEnd" type="time" value="21:00" />
+        <button class="btn small ghost" id="addSlotBtn">添加</button>
+      </div>
+      <div id="adminSlots"></div>
+
+      <h2 style="margin-top:3rem;">收到的邀请</h2>
+      <div id="adminRequests"></div>
+      <div id="adminStatus" style="margin-top:1rem; font-size:0.85rem; color:var(--accent);"></div>
+    </section>
+  </main>
+
+  <footer>SHANGHAI · AUG 2026</footer>
+
+<script>
+// ═══ 配置：部署 meet-worker.js 后把这里换成你的 Worker URL ═══
+const API_URL = 'https://ljw-meet.fayette0302.workers.dev';
+
+const EVENTS = {
+  '吃的 🍚': ['费大厨', '知福里', '彭浦一炸', '很久以前', '御陕坊', '螺蛳粉', '四海游龙',
+             '鸭煲', '臭鳜鱼', '烤冷面', '烤鱼·烤匠', '炸鸡柳·鸡柳大人', '先启半步癫·黯然销魂饭', '佬肥猫', 'Other'],
+  '做的 ✨': ['唱K', '剪头', '美甲', 'Other'],
+};
+
+const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+let selectedEvent = null;   // {category, name}
+let selectedSlot = null;    // slot id
+let slotsCache = [];
+let busyCache = [];         // 日历忙碌段 [{date,start,end}]
+
+const $ = id => document.getElementById(id);
+const isAdmin = new URLSearchParams(location.search).has('admin');
+
+function fmtDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${WEEKDAYS[d.getDay()]}`;
+}
+
+// ═══ 朋友视图 ═══
+function renderEvents() {
+  const container = $('eventGroups');
+  container.innerHTML = '';
+  for (const [group, items] of Object.entries(EVENTS)) {
+    const title = document.createElement('div');
+    title.className = 'group-title';
+    title.textContent = group;
+    container.appendChild(title);
+
+    const chips = document.createElement('div');
+    chips.className = 'chips';
+    for (const item of items) {
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.textContent = item;
+      btn.onclick = () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedEvent = { category: group, name: item };
+        $('otherInput').style.display = item === 'Other' ? 'block' : 'none';
+      };
+      chips.appendChild(btn);
+    }
+    container.appendChild(chips);
+  }
+}
+
+async function loadSlots() {
+  try {
+    const [stateRes, busyRes] = await Promise.all([
+      fetch(`${API_URL}/state`),
+      fetch(`${API_URL}/busy`).catch(() => null), // 忙碌块加载失败不影响主流程
+    ]);
+    const data = await stateRes.json();
+    slotsCache = data.slots || [];
+    try { busyCache = busyRes && busyRes.ok ? (await busyRes.json()).busy || [] : []; }
+    catch { busyCache = []; }
+    renderSlots();
+  } catch (e) {
+    $('slotList').innerHTML = '<p class="empty-hint">时段加载失败了，刷新试试？</p>';
+  }
+}
+
+function renderSlots() {
+  const container = $('slotList');
+  container.innerHTML = '';
+  if (!slotsCache.length) {
+    container.innerHTML = '<p class="empty-hint">还没放出空闲时段，过两天再来看看～</p>';
+    return;
+  }
+  const byDate = {};
+  for (const s of slotsCache) (byDate[s.date] ||= []).push({ kind: 'slot', ...s });
+  // 日历忙碌块只插进有可选时段的日期，避免整页都是灰块
+  for (const b of busyCache) if (byDate[b.date]) byDate[b.date].push({ kind: 'busy', ...b });
+
+  for (const date of Object.keys(byDate).sort()) {
+    const day = document.createElement('div');
+    day.className = 'day';
+    const title = document.createElement('div');
+    title.className = 'day-title';
+    title.textContent = fmtDate(date);
+    day.appendChild(title);
+
+    const row = document.createElement('div');
+    row.className = 'slot-row';
+    for (const s of byDate[date].sort((a, b) => a.start.localeCompare(b.start))) {
+      if (s.kind === 'busy') {
+        const span = document.createElement('span');
+        span.className = 'slot busy';
+        span.textContent = `忙 · ${s.start} – ${s.end}`;
+        row.appendChild(span);
+        continue;
+      }
+      const btn = document.createElement('button');
+      btn.className = 'slot';
+      if (s.status === 'free') {
+        btn.textContent = `${s.start} – ${s.end}`;
+        btn.onclick = () => {
+          document.querySelectorAll('.slot').forEach(x => x.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedSlot = s.id;
+        };
+      } else {
+        btn.textContent = `${s.start} – ${s.end} · ${s.status === 'confirmed' ? '已约' : '待确认'}`;
+        btn.classList.add('taken');
+        btn.disabled = true;
+      }
+      row.appendChild(btn);
+    }
+    day.appendChild(row);
+    container.appendChild(day);
+  }
+}
+
+async function submitRequest() {
+  const status = $('status');
+  if (!selectedEvent) return status.textContent = '先选一个 event 呀';
+  let eventName = selectedEvent.name;
+  if (eventName === 'Other') {
+    eventName = $('otherInput').value.trim();
+    if (!eventName) return status.textContent = '选了 Other 的话写一下想干嘛～';
+  }
+  if (!selectedSlot) return status.textContent = '挑一个时间～';
+  const name = $('nameInput').value.trim();
+  if (!name) return status.textContent = '名字是必填的哦';
+
+  $('submitBtn').disabled = true;
+  status.textContent = '发送中…';
+  try {
+    const res = await fetch(`${API_URL}/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slotId: selectedSlot,
+        category: selectedEvent.category,
+        event: eventName,
+        name,
+        wechat: $('wechatInput').value.trim(),
+        message: $('messageInput').value.trim(),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '发送失败');
+    $('guestView').style.display = 'none';
+    $('successView').style.display = 'block';
+    window.scrollTo(0, 0);
+  } catch (e) {
+    status.textContent = e.message;
+    $('submitBtn').disabled = false;
+    loadSlots();
+  }
+}
+
+// ═══ 管理视图 ═══
+function adminKey() {
+  let key = localStorage.getItem('meetAdminKey');
+  if (!key) {
+    key = prompt('管理密码：');
+    if (key) localStorage.setItem('meetAdminKey', key);
+  }
+  return key;
+}
+
+async function adminFetch(path, opts = {}) {
+  const res = await fetch(`${API_URL}${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey(), ...(opts.headers || {}) },
+  });
+  if (res.status === 401) {
+    localStorage.removeItem('meetAdminKey');
+    throw new Error('密码不对，刷新重试');
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '出错了');
+  return data;
+}
+
+function gcalTimes(slot) {
+  const d = slot.date.replace(/-/g, '');
+  const t = hm => hm.replace(':', '') + '00';
+  return `${d}T${t(slot.start)}/${d}T${t(slot.end)}`;
+}
+
+function gcalLink(req, slot) {
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `${req.event} · ${req.name}`,
+    dates: gcalTimes(slot),
+    ctz: 'Asia/Shanghai',
+    details: `和 ${req.name} 约了 ${req.event}${req.wechat ? '\n微信：' + req.wechat : ''}${req.message ? '\n留言：' + req.message : ''}`,
+  });
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
+function downloadIcs(req, slot) {
+  // 转义 iCalendar TEXT 值：反斜杠、分号、逗号，换行编码为字面量 \n
+  const icsEscape = text => String(text)
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r\n|\r|\n/g, '\\n');
+  // 按 UTF-8 字节 ≤75 octets 折行，续行以 CRLF + 空格开头，不切断多字节字符
+  const foldLine = line => {
+    const enc = new TextEncoder();
+    const out = [];
+    let cur = '';
+    let curBytes = 0;
+    for (const ch of line) {
+      const chBytes = enc.encode(ch).length;
+      // 续行首部占 1 个 octet（前导空格），首行无前导，限 75 octets
+      const limit = out.length === 0 ? 75 : 74;
+      if (curBytes + chBytes > limit) {
+        out.push(cur);
+        cur = ch;
+        curBytes = chBytes;
+      } else {
+        cur += ch;
+        curBytes += chBytes;
+      }
+    }
+    out.push(cur);
+    return out.join('\r\n ');
+  };
+  const d = slot.date.replace(/-/g, '');
+  const t = hm => hm.replace(':', '') + '00';
+  const dtstamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//jiaweilu//meet//CN',
+    'BEGIN:VEVENT',
+    `UID:${req.id}@meet`,
+    `DTSTAMP:${dtstamp}`,
+    `DTSTART;TZID=Asia/Shanghai:${d}T${t(slot.start)}`,
+    `DTEND;TZID=Asia/Shanghai:${d}T${t(slot.end)}`,
+    foldLine(`SUMMARY:${icsEscape(req.event + ' · ' + req.name)}`),
+    foldLine(`DESCRIPTION:${icsEscape('微信：' + (req.wechat || '无') + '\n留言：' + (req.message || '无'))}`),
+    'END:VEVENT', 'END:VCALENDAR',
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${req.event}-${req.name}.ics`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function loadAdmin() {
+  const status = $('adminStatus');
+  try {
+    const { slots, requests } = await adminFetch('/admin/state');
+    const slotById = Object.fromEntries(slots.map(s => [s.id, s]));
+
+    // 时段列表
+    const slotBox = $('adminSlots');
+    slotBox.innerHTML = slots.length ? '' : '<p class="empty-hint">还没有时段，先加几个～</p>';
+    for (const s of slots) {
+      const row = document.createElement('div');
+      row.className = 'slot-admin-row';
+      const label = document.createElement('span');
+      label.appendChild(document.createTextNode(`${fmtDate(s.date)} · ${s.start} – ${s.end}`));
+      const slotTag = document.createElement('span');
+      slotTag.className = `tag ${s.status === 'free' ? 'confirmed' : s.status}`;
+      slotTag.textContent = { free: '空闲', pending: '待确认', confirmed: '已约' }[s.status];
+      label.appendChild(slotTag);
+      row.appendChild(label);
+      if (s.status === 'free') {
+        const del = document.createElement('button');
+        del.className = 'btn small ghost';
+        del.textContent = '删除';
+        del.onclick = async () => {
+          await adminFetch('/admin/slots', { method: 'POST', body: JSON.stringify({ action: 'delete', id: s.id }) });
+          loadAdmin();
+        };
+        row.appendChild(del);
+      }
+      slotBox.appendChild(row);
+    }
+
+    // 邀请列表
+    const reqBox = $('adminRequests');
+    const sorted = [...requests].reverse();
+    reqBox.innerHTML = sorted.length ? '' : '<p class="empty-hint">还没有人发邀请。</p>';
+    for (const r of sorted) {
+      const slot = slotById[r.slotId];
+      const card = document.createElement('div');
+      card.className = 'admin-card';
+
+      const who = document.createElement('div');
+      who.className = 'who';
+      who.appendChild(document.createTextNode(r.name));
+      const reqTag = document.createElement('span');
+      reqTag.className = `tag ${r.status}`;
+      reqTag.textContent = { pending: '待确认', confirmed: '已确认', rejected: '已拒绝' }[r.status];
+      who.appendChild(reqTag);
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const eventLine = document.createElement('div');
+      eventLine.textContent = `${r.event}${r.category ? '（' + r.category + '）' : ''}`;
+      meta.appendChild(eventLine);
+      const slotLine = document.createElement('div');
+      slotLine.textContent = slot ? fmtDate(slot.date) + ' · ' + slot.start + ' – ' + slot.end : '（时段已删除）';
+      meta.appendChild(slotLine);
+      if (r.wechat) {
+        const wechatLine = document.createElement('div');
+        wechatLine.textContent = '微信：' + r.wechat;
+        meta.appendChild(wechatLine);
+      }
+      if (r.message) {
+        const messageLine = document.createElement('div');
+        messageLine.textContent = '留言：' + r.message;
+        meta.appendChild(messageLine);
+      }
+
+      card.append(who, meta);
+      const actions = document.createElement('div');
+      actions.className = 'admin-actions';
+      if (r.status === 'pending') {
+        const ok = document.createElement('button');
+        ok.className = 'btn small';
+        ok.textContent = '确认 ✓';
+        ok.onclick = async () => {
+          await adminFetch('/admin/decide', { method: 'POST', body: JSON.stringify({ requestId: r.id, action: 'confirm' }) });
+          loadAdmin();
+        };
+        const no = document.createElement('button');
+        no.className = 'btn small ghost';
+        no.textContent = '拒绝';
+        no.onclick = async () => {
+          await adminFetch('/admin/decide', { method: 'POST', body: JSON.stringify({ requestId: r.id, action: 'reject' }) });
+          loadAdmin();
+        };
+        actions.append(ok, no);
+      } else if (r.status === 'confirmed' && slot) {
+        const g = document.createElement('a');
+        g.className = 'cal-link';
+        g.href = gcalLink(r, slot);
+        g.target = '_blank';
+        g.textContent = '加到 Google Calendar ↗';
+        const ics = document.createElement('button');
+        ics.className = 'btn small ghost';
+        ics.textContent = '下载 .ics';
+        ics.onclick = () => downloadIcs(r, slot);
+        actions.append(g, ics);
+      }
+      card.appendChild(actions);
+      reqBox.appendChild(card);
+    }
+    status.textContent = '';
+  } catch (e) {
+    status.textContent = e.message;
+  }
+}
+
+$('addSlotBtn')?.addEventListener('click', async () => {
+  const date = $('adminDate').value, start = $('adminStart').value, end = $('adminEnd').value;
+  if (!date || !start || !end) return $('adminStatus').textContent = '日期和时间都要填';
+  if (end <= start) return $('adminStatus').textContent = '结束时间要晚于开始时间';
+  try {
+    await adminFetch('/admin/slots', { method: 'POST', body: JSON.stringify({ action: 'add', date, start, end }) });
+    loadAdmin();
+  } catch (e) { $('adminStatus').textContent = e.message; }
+});
+
+// ═══ 启动 ═══
+if (isAdmin) {
+  $('guestView').style.display = 'none';
+  $('adminView').style.display = 'block';
+  loadAdmin();
+} else {
+  renderEvents();
+  loadSlots();
+  $('submitBtn').addEventListener('click', submitRequest);
+}
+</script>
+<script src="mind-noise.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

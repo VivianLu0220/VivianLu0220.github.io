@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CV — Jiawei Lu</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<style>
+  .cv-top { display: grid; grid-template-columns: 1fr 320px; gap: clamp(30px, 5vw, 90px); align-items: end; margin-bottom: 8vh; }
+  .cv-facts { display: flex; flex-direction: column; gap: 8px; font-size: 10.5px; letter-spacing: 0.12em; color: #7c7974; }
+  .cv-facts a { color: var(--fg-2); }
+  .cv-facts .k { color: var(--accent); margin-right: 10px; }
+  .skills { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8vh; }
+  .skills span { font-size: 9.5px; letter-spacing: 0.14em; color: var(--fg-3); border: 1px solid oklch(0.55 0.07 var(--em-h) / 0.3); padding: 5px 9px; }
+  @media (max-width: 900px) { .cv-top { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body data-noise-mode="traffic" data-noise-chaos="0.45">
+
+<canvas data-noise></canvas>
+<div data-veil></div>
+
+<nav class="top chrome">
+  <span class="dot"></span>
+  <a href="index.html"><span data-lang="zh">首页</span><span data-lang="en">HOME</span></a>
+  <a href="cv.html" class="active"><span data-lang="zh">经历</span><span data-lang="en">CV</span></a>
+  <a href="flowers.html"><span data-lang="zh">花期</span><span data-lang="en">BLOOM</span></a>
+  <a href="chat.html"><span data-lang="zh">聊天</span><span data-lang="en">CHAT</span></a>
+  <a href="blog/index.html" class="opt"><span data-lang="zh">博客</span><span data-lang="en">BLOG</span></a>
+</nav>
+<div class="controls">
+  <div class="lang chrome">
+    <button data-lang-btn="zh">中文</button>
+    <button data-lang-btn="en">EN</button>
+  </div>
+</div>
+
+<main class="page">
+  <div class="sec-head">
+    <div class="eyebrow"><span data-lang="zh">记录 — 完整简历</span><span data-lang="en">RECORD — FULL CV</span></div>
+    <div class="rule"></div>
+    <div class="hint">NEW YORK · 2026</div>
+  </div>
+
+  <div class="cv-top">
+    <div>
+      <h1 class="display" style="margin-bottom: 26px;">
+        <span class="en-head" data-restless-item>Jiawei</span>
+        <span class="it" data-restless-item data-glitch>Lu</span>
+      </h1>
+      <p class="zh-body lede" data-lang="zh" style="margin: 0;">哥伦比亚大学统计学硕士在读（机器学习方向，2025–2027）。做过大模型数据流水线、多模型推理、AI 语音智能体和业务数据分析。实习过阶跃星辰、小红书、大陆集团，2026 夏天在达拉斯的 xHealth 做健康 AI 产品。</p>
+      <p class="en-body lede" data-lang="en" style="margin: 0;">MS Statistics (Machine Learning track) at Columbia, 2025–2027. Hands-on with LLM data pipelines, multi-model inference, AI voice agents and business analytics. Interned at Stepfun, Red Note and Continental; spent summer 2026 at xHealth Group in Dallas building AI healthcare products.</p>
+    </div>
+    <div class="cv-facts">
+      <span><span class="k">LOC</span>New York, USA</span>
+      <span><span class="k">MAIL</span><a href="mailto:fayette0302@gmail.com">fayette0302@gmail.com</a></span>
+      <span><span class="k">GH</span><a href="https://github.com/vivian0220" target="_blank" rel="noopener">github.com/vivian0220</a></span>
+      <span><span class="k">IN</span><a href="https://linkedin.com/in/jiawei-lu-vivian0220" target="_blank" rel="noopener">jiawei-lu-vivian0220</a></span>
+      <span><span class="k">EDU</span>Columbia MS Stats · SJTU B.Eng</span>
+    </div>
+  </div>
+
+  <div class="skills">
+    <span>PYTHON</span><span>PYTORCH</span><span>HUGGINGFACE</span><span>SCIKIT-LEARN</span><span>SQL</span><span>R</span><span>LLM</span><span>NLP</span><span>PROMPT ENGINEERING</span><span>REACT / TS</span><span>DATA VIZ</span>
+  </div>
+
+  <h2 class="display">
+    <span class="zh-head" data-lang="zh">实习</span>
+    <span class="en-head" data-lang="en">Internships</span>
+  </h2>
+
+  <div class="row">
+    <div class="meta"><span class="when">2026.06 — 08</span><span>DALLAS, TX</span></div>
+    <div>
+      <div class="title"><h3 class="plain">xHealth Group</h3><span class="role"><span data-lang="zh">软件工程实习生</span><span data-lang="en">SUMMER ENGINEERING INTERN</span></span></div>
+      <p class="zh-body" data-lang="zh">一个以做东西为主的实习，同时碰了几个 AI 医疗产品：远程患者监测、主动外呼的 AI 语音智能体、AI 营销内容流水线，每个都负责了一大块。</p>
+      <p class="en-body" data-lang="en">A build-first internship across several AI-driven healthcare products — remote patient monitoring, a proactive AI voice agent, and an AI marketing content pipeline — owning substantial pieces of each end-to-end.</p>
+      <ul class="zh-body" data-lang="zh">
+        <li>和团队一起搭远程患者监测和照护协调平台，前端 React/TypeScript，后端 Python，云基础设施，重点补自动化测试。</li>
+        <li>参与用药依从性外呼的 AI 语音智能体，做 LLM 编排，以及一个对比不同模型后端回答质量的基准工具。</li>
+        <li>帮着上线 AI 营销内容流水线：生成、合规审核、多渠道排期，还给一个医疗相关客户做了带完整审计记录的扩展。</li>
+        <li>经常同时开多个 git worktree，功能、基础设施修复、稳定性加固并行推进。</li>
+      </ul>
+      <ul class="en-body" data-lang="en">
+        <li>Co-built a remote patient-monitoring and care-coordination platform across the full stack (React/TypeScript frontend, Python backend, cloud infrastructure) with a strong emphasis on automated test coverage.</li>
+        <li>Contributed to a proactive AI voice agent for medication-adherence outreach: LLM orchestration and a benchmark harness for comparing model backends on response quality.</li>
+        <li>Helped ship an AI-powered marketing content pipeline — generation, compliance review, multi-channel scheduling — including an extension for a healthcare-adjacent client with a full audit-trail requirement.</li>
+        <li>Regularly ran multiple parallel git worktrees to move across concurrent feature work, infra fixes and reliability hardening.</li>
+      </ul>
+      <div class="tags"><span>LLM ORCHESTRATION</span><span>VOICE AGENTS</span><span>REACT / TYPESCRIPT</span><span>PYTHON</span><span>CLOUD INFRA</span><span>HEALTHCARE AI</span></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="meta"><span class="when">2024.06 — 2025.08</span><span>SHANGHAI</span></div>
+    <div>
+      <div class="title"><h3 class="plain"><span data-lang="zh">阶跃星辰</span><span data-lang="en">Shanghai Stepfun Co.</span></h3><span class="role"><span data-lang="zh">大模型数据工程实习生</span><span data-lang="en">LLM DATA ENGINEERING INTERN</span></span></div>
+      <p class="zh-body" data-lang="zh">在自研大模型的数据侧，做中文对话数据，语料来自相声录音。</p>
+      <p class="en-body" data-lang="en">On the data pipeline side of in-house LLM development, focusing on Chinese conversational data sourced from crosstalk (相声) recordings.</p>
+      <ul class="zh-body" data-lang="zh">
+        <li>设计三级过滤流水线（正则规则 → LLM 判别 → 人工抽检），一万多条原始对话筛到约六千条训练样本。</li>
+        <li>写 few-shot 样例，让 LLM 改写信息密度低的对话片段。</li>
+        <li>搭 GPT / Claude / Qwen 多模型路由，异步调用快约 5 倍，本地并行做基准测试快约 10 倍。</li>
+        <li>跨模型做 prompt 位置消融，发现 System 和 User 角色注入的最优位置因模型而异，直接影响了流水线设计。</li>
+        <li>清洗后的数据让内部推理 / 语言基准涨 6–7 分，过了上线门槛。</li>
+      </ul>
+      <ul class="en-body" data-lang="en">
+        <li>Designed a three-stage filtering pipeline (rule-based regex → LLM-as-a-Judge → manual spot-check) to turn 10K+ raw dialogues into ~6K gold-standard training samples.</li>
+        <li>Developed few-shot examples to guide LLM-assisted rewriting of low-density dialogue segments.</li>
+        <li>Built a multi-model routing pipeline (GPT / Claude / Qwen) with async API execution (~5× speedup) and local parallelisation for benchmarking (~10×).</li>
+        <li>Ran prompt-placement ablations across models; optimal System-role vs. User-role injection varied by model, which shaped the pipeline design.</li>
+        <li>The curated dataset contributed to a 6–7 point gain on internal reasoning/language benchmarks, clearing the bar for consumer deployment.</li>
+      </ul>
+      <div class="tags"><span>PYTHON</span><span>PROMPT ENGINEERING</span><span>LLM</span><span>DATA PIPELINE</span><span>API INTEGRATION</span></div>
+      <div class="links"><a href="blog/multi-model-routing-zh.html" data-lang="zh">博客：多模型路由 →</a><a href="blog/multi-model-routing-en.html" data-lang="en">BLOG: MULTI-MODEL ROUTING →</a></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="meta"><span class="when">2024.02 — 05</span><span>SHANGHAI</span></div>
+    <div>
+      <div class="title"><h3 class="plain"><span data-lang="zh">小红书</span><span data-lang="en">Red Note</span></h3><span class="role"><span data-lang="zh">快消部门数据分析实习生</span><span data-lang="en">DATA ANALYST INTERN, FMCG</span></span></div>
+      <p class="zh-body" data-lang="zh">销售团队要跟品牌客户（主要是健康类）解释广告有没有用、和竞品比在什么位置。我搭了支撑这些对话的数据和分析。</p>
+      <p class="en-body" data-lang="en">The sales team needed to show brand clients — mostly in health &amp; wellness — whether their ad spend was working and how they stacked up against competitors. I built the data and analysis behind those conversations.</p>
+      <ul class="zh-body" data-lang="zh">
+        <li>用 Selenium 自动化内部分析平台的取数，从半天缩到 30 分钟以内。</li>
+        <li>用 Excel 给十多个隐形眼镜品牌做多维分析，按产品线、时间段、投放位置看回搜率和转化率。</li>
+        <li>做匿名化的竞品对标报告，客户能看同行表现但看不到是谁。</li>
+        <li>给销售和品类经理出建议，四个重点客户基本全部采纳，影响了后续预算。</li>
+        <li>参与投后复盘，准备复盘 deck 的数据部分。</li>
+      </ul>
+      <ul class="en-body" data-lang="en">
+        <li>Automated data retrieval from the internal analytics platform via Selenium, cutting pull time from half a day to under 30 minutes.</li>
+        <li>Built Excel-based multi-dimensional analyses tracking return-search and conversion rates across product lines, periods and placements for 10+ contact lens brands.</li>
+        <li>Produced anonymised competitive benchmarking reports.</li>
+        <li>Delivered recommendations to sales and category managers; 4 key accounts adopted nearly all suggestions.</li>
+        <li>Prepared the data components of post-campaign recap decks.</li>
+      </ul>
+      <div class="tags"><span>PYTHON (SELENIUM)</span><span>EXCEL</span><span>SQL</span><span>DATA ANALYSIS</span><span>DATA VISUALISATION</span></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="meta"><span class="when">2023.06 — 09</span><span>SHANGHAI</span></div>
+    <div>
+      <div class="title"><h3 class="plain"><span data-lang="zh">大陆集团</span><span data-lang="en">Continental Tires</span></h3><span class="role"><span data-lang="zh">运营分析实习生</span><span data-lang="en">OPERATIONS ANALYST INTERN</span></span></div>
+      <ul class="zh-body" data-lang="zh">
+        <li>分析经销商层面的销售数据，找出表现差的门店，标记需要正式干预的。</li>
+        <li>警告函分发用邮件合并自动化，每个高峰周期十到十五封，从两天缩到一个下午。</li>
+      </ul>
+      <ul class="en-body" data-lang="en">
+        <li>Analysed dealer-level sales data to identify underperforming stores and flag those requiring formal intervention.</li>
+        <li>Automated warning-letter distribution via mail merge, reducing turnaround from ~2 days to a single afternoon for ~10–15 letters per peak cycle.</li>
+      </ul>
+      <div class="tags"><span>EXCEL</span><span>DATA ANALYSIS</span></div>
+    </div>
+  </div>
+
+  <h2 class="display">
+    <span class="zh-head" data-lang="zh">项目</span>
+    <span class="en-head" data-lang="en">Projects</span>
+  </h2>
+
+  <div class="row">
+    <div class="meta"><span class="when">2025.12</span><span>COLUMBIA · NLP</span></div>
+    <div>
+      <div class="title"><h3 class="plain">NL to Performant SQL</h3><span class="role"><span data-lang="zh">课程项目 · 组员</span><span data-lang="en">COURSE PROJECT · GROUP MEMBER</span></span></div>
+      <p class="zh-body" data-lang="zh">让小模型写出跑得快的 SQL，不只是写对。在 BIRD 基准上两阶段微调 Qwen3-4B。</p>
+      <p class="en-body" data-lang="en">Can a small model generate not just correct SQL, but efficient SQL? Two-stage alignment of Qwen3-4B on the BIRD benchmark.</p>
+      <ul class="zh-body" data-lang="zh">
+        <li>先用高效 / 低效 SQL 配对做 DPO，再用带延迟奖励的执行感知强化学习（GRPO 风格）。</li>
+        <li>BIRD Mini-Dev 上执行准确率和 R-VES 比基线高 7%。</li>
+        <li>对查询结构和优化模式做了定性错误分析。</li>
+      </ul>
+      <ul class="en-body" data-lang="en">
+        <li>DPO on curated efficient-vs-inefficient SQL pairs, then execution-aware RL (GRPO-style) with latency-based rewards.</li>
+        <li>7% improvement in execution accuracy and R-VES over baseline on BIRD Mini-Dev.</li>
+        <li>Qualitative error analysis on query structure and optimisation patterns.</li>
+      </ul>
+      <div class="tags"><span>PYTORCH</span><span>HUGGINGFACE</span><span>DPO</span><span>GRPO</span><span>NLP</span><span>SQL</span></div>
+      <div class="links">
+        <a href="../nl2sql_report.pdf" target="_blank"><span data-lang="zh">查看报告 →</span><span data-lang="en">VIEW REPORT →</span></a>
+        <a href="blog/nl2sql-dpo-grpo-zh.html" data-lang="zh">博客 →</a><a href="blog/nl2sql-dpo-grpo-en.html" data-lang="en">BLOG POST →</a>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="display">
+    <span class="zh-head" data-lang="zh">志愿与社团</span>
+    <span class="en-head" data-lang="en">Volunteer &amp; Leadership</span>
+  </h2>
+
+  <div class="row">
+    <div class="meta"><span class="when">2022.12 — 2025.01</span><span>SHANGHAI</span></div>
+    <div>
+      <div class="title"><h3 class="plain"><span data-lang="zh">上海交大 电院志愿者协会</span><span data-lang="en">SJTU SEIEE Student Volunteer Association</span></h3><span class="role"><span data-lang="zh">副主席 · 宣传部长</span><span data-lang="en">VICE PRESIDENT &amp; HEAD OF PUBLICITY</span></span></div>
+      <ul class="zh-body" data-lang="zh">
+        <li>三年里从宣传干事到宣传部长再到副主席。</li>
+        <li>一个月两场活动，人头、物料、时间表、对外沟通从头管到尾。</li>
+        <li>带 25 人的宣传组，负责公众号和其他平台的内容。</li>
+        <li>上海马拉松志愿项目从招募到复盘的整个宣传周期。</li>
+      </ul>
+      <ul class="en-body" data-lang="en">
+        <li>Publicity Officer → Head of Publicity → Vice President over three consecutive years.</li>
+        <li>Co-led ~2 events per month: headcount, materials, schedules and external stakeholder communication.</li>
+        <li>Managed a 25-person publicity team producing content for the WeChat Official Account and other platforms.</li>
+        <li>Led the full publicity cycle for the Shanghai Marathon volunteer programme, from recruitment to post-event recap.</li>
+      </ul>
+    </div>
+  </div>
+</main>
+
+<footer class="bar">
+  <span>JIAWEI LU · CV 2026</span>
+  <span data-mood-readout>DRIFTING · 走神</span>
+  <span><a href="index.html">← <span data-lang="zh">首页</span><span data-lang="en">HOME</span></a></span>
+</footer>
+
+<script src="mind-noise.js"></script>
+<script src="site.js"></script>
+</body>
+</html>
