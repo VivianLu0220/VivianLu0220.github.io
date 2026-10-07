@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>西昌交通项目 — Jiawei Lu</title>
+<meta name="description" content="从事故地图到出行需求模型：西昌市道路交通事故风险与四阶段出行需求模型的完整讲解">
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#ffffff; --ink:#1d1f23; --muted:#5d6370; --line:#e3e4e8;
+  --accent:#2563eb; --accent-soft:#e8effd; --orange:#e8632b; --orange-soft:#fdeee6;
+  --green:#15803d; --green-soft:#e7f5ec; --amber:#b45309; --amber-soft:#fdf3e1;
+  --code:#f1f3f6; --shadow:0 1px 2px rgba(0,0,0,.05),0 6px 20px rgba(0,0,0,.05);
+  --r:12px; --maxw:1120px;
+}
+:root:not([data-theme="light"]){ color-scheme: light dark; }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171b; --panel:#1e2127; --ink:#e8e9ec; --muted:#a2a8b4; --line:#2e323a;
+    --accent:#7ea6ff; --accent-soft:#1f2a44; --orange:#ff8a55; --orange-soft:#3a251c;
+    --green:#5ccb84; --green-soft:#17301f; --amber:#f0b35b; --amber-soft:#382c17;
+    --code:#262a31; --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171b; --panel:#1e2127; --ink:#e8e9ec; --muted:#a2a8b4; --line:#2e323a;
+  --accent:#7ea6ff; --accent-soft:#1f2a44; --orange:#ff8a55; --orange-soft:#3a251c;
+  --green:#5ccb84; --green-soft:#17301f; --amber:#f0b35b; --amber-soft:#382c17;
+  --code:#262a31; --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--ink);font:16px/1.7 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+img{max-width:100%;height:auto;display:block}
+h1,h2,h3,h4{line-height:1.3;margin:0 0 .5em;font-weight:650}
+h1{font-size:clamp(26px,4vw,38px)}
+h2{font-size:clamp(21px,3vw,27px);margin-top:.2em}
+h3{font-size:19px;margin-top:1.6em;padding-top:.2em}
+h4{font-size:16.5px;margin-top:1.3em;color:var(--ink)}
+p{margin:.55em 0 .9em}
+ul,ol{padding-left:1.4em;margin:.4em 0 .9em}
+li{margin:.25em 0}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-size:.92em}
+code{background:var(--code);padding:.1em .4em;border-radius:5px}
+pre{background:var(--code);padding:14px 16px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.55;margin:.6em 0 1em}
+pre code{background:none;padding:0}
+table{border-collapse:collapse;width:100%;margin:.6em 0 1.1em;font-size:14.5px}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-weight:650;color:var(--muted);font-size:13.5px;letter-spacing:.02em}
+tr:last-child td{border-bottom:none}
+.tbl-wrap{overflow-x:auto;margin:.6em 0 1.1em}
+.tbl-wrap table{margin:0;min-width:520px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px}
+
+/* header */
+.hero{background:linear-gradient(135deg,#0f2a5e 0%,#1d4ed8 55%,#2563eb 100%);color:#fff;padding:44px 0 32px}
+:root[data-theme="dark"] .hero{background:linear-gradient(135deg,#0b1a3a,#14306e)}
+.hero .wrap{display:flex;flex-direction:column;gap:14px}
+.hero h1{color:#fff;margin:0}
+.hero .sub{opacity:.92;max-width:760px;font-size:17px;margin:0}
+.hero .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:13px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.chip.ok{background:var(--green-soft);color:var(--green);border-color:transparent}
+.chip.warn{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.chip.acc{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.chip.org{background:var(--orange-soft);color:var(--orange);border-color:transparent}
+.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:6px}
+.toolbar .right{display:flex;gap:8px}
+.btn{appearance:none;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:7px 13px;font-size:14px;cursor:pointer}
+.btn:hover{background:rgba(255,255,255,.22)}
+.btn.ghost{border-color:var(--line);background:var(--panel);color:var(--ink)}
+
+/* tabs */
+.tabbar-wrap{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);backdrop-filter:saturate(1.2) blur(6px)}
+.tabbar{display:flex;gap:4px;overflow-x:auto;padding:8px 0;scrollbar-width:thin}
+.tabbar .grp{display:flex;align-items:center;gap:4px;padding-right:10px;margin-right:6px;border-right:1px solid var(--line)}
+.tabbar .grp:last-child{border-right:none}
+.tabbar .glabel{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:0 6px 0 2px;white-space:nowrap}
+.tab{appearance:none;border:1px solid transparent;background:transparent;color:var(--ink);padding:7px 12px;border-radius:9px;font-size:14px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.tab .n{font-size:11.5px;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace}
+.tab:hover{background:var(--panel);border-color:var(--line)}
+.tab[aria-selected="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab[aria-selected="true"] .n{color:rgba(255,255,255,.8)}
+
+/* panels */
+main{padding:26px 0 70px}
+.panel{display:none}
+.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.lead{font-size:17.5px;color:var(--ink);max-width:820px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);margin:14px 0}
+.card h3:first-child,.card h4:first-child{margin-top:0}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.tile .v{font-size:26px;overflow-wrap:anywhere;font-weight:700;letter-spacing:-.01em;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .k{font-size:13px;color:var(--muted);margin-top:4px}
+.tile .d{font-size:12.5px;color:var(--muted);margin-top:6px}
+.note{border-left:4px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 10px 10px 0;margin:.9em 0}
+.note.warn{border-color:var(--amber);background:var(--amber-soft)}
+.note.ok{border-color:var(--green);background:var(--green-soft)}
+.note.org{border-color:var(--orange);background:var(--orange-soft)}
+.note p:first-child{margin-top:0}.note p:last-child{margin-bottom:0}
+.note .t{font-weight:650;display:block;margin-bottom:2px}
+.say{border:1px dashed var(--line);border-radius:10px;padding:12px 16px;margin:.9em 0;background:var(--panel)}
+.say .t{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px}
+.say p{margin:.2em 0}
+.say .en{font-style:italic}
+.fm{background:var(--code);border-radius:10px;padding:12px 16px;margin:.6em 0 1em;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:17px;overflow-x:auto;line-height:1.9}
+.fm .ex{font-family:inherit;font-size:13.5px;color:var(--muted);display:block;margin-top:4px;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.fm sub,.fm sup{font-size:.72em}
+.fig{margin:1em 0 1.3em}
+.fig img{border-radius:10px;border:1px solid var(--line);cursor:zoom-in;background:#fff}
+.fig figcaption{font-size:13.5px;color:var(--muted);margin-top:8px;line-height:1.55}
+.fig figcaption b{color:var(--ink)}
+.fig.half{max-width:620px}
+.figrow{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start}
+details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin:.7em 0;overflow:hidden}
+details>summary{cursor:pointer;padding:11px 16px;font-weight:600;list-style:none;display:flex;align-items:center;gap:10px}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .2s;flex:none}
+details[open]>summary::before{transform:rotate(45deg)}
+details>.body{padding:4px 16px 14px;border-top:1px solid var(--line)}
+.steps{counter-reset:s;display:grid;gap:10px}
+.step{position:relative;padding:12px 14px 12px 54px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.step::before{counter-increment:s;content:counter(s);position:absolute;left:14px;top:12px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+.step>b:first-child{display:block;margin-bottom:2px}
+.pipe{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.6em 0 1em}
+.pipe .box{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:14px;cursor:pointer;transition:all .15s}
+.pipe .box:hover{border-color:var(--accent);color:var(--accent)}
+.pipe .box.p1{border-left:4px solid var(--orange)}
+.pipe .box.p2{border-left:4px solid var(--accent)}
+.pipe .arr{color:var(--muted);font-size:14px}
+.legend{font-size:13px;color:var(--muted)}
+.two{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:start}
+.kv{display:grid;grid-template-columns:minmax(72px,max-content) 1fr;gap:6px 14px;font-size:14.5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.flash{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;cursor:pointer;margin:.7em 0;transition:border-color .15s}
+.flash:hover{border-color:var(--accent)}
+.flash .q{font-weight:650;display:flex;gap:10px;align-items:flex-start}
+.flash .q::before{content:"Q";flex:none;width:24px;height:24px;border-radius:7px;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700}
+.flash .a{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.flash.open .a{display:block}
+.flash .hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+.widget{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:1em 0}
+.widget h4{margin-top:0}
+.widget label{display:block;font-size:13.5px;color:var(--muted);margin-top:8px}
+.widget input[type=range]{width:100%}
+.widget .out{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14.5px;background:var(--code);border-radius:8px;padding:10px 12px;margin-top:10px;line-height:1.6}
+.widget .out b{color:var(--accent)}
+canvas{max-width:100%;display:block}
+.timeline{border-left:2px solid var(--line);margin:.8em 0 .8em 8px;padding-left:18px;display:grid;gap:12px}
+.timeline .ev{position:relative}
+.timeline .ev::before{content:"";position:absolute;left:-24px;top:8px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.timeline .ev.p1::before{background:var(--orange)}
+.timeline .when{font-size:12.5px;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace}
+.mine{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:999px;background:var(--green-soft);color:var(--green);vertical-align:middle;margin-left:6px;font-weight:600}
+.team{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:999px;background:var(--amber-soft);color:var(--amber);vertical-align:middle;margin-left:6px;font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:.4em 0 1.2em}
+.toc a{font-size:13px;text-decoration:none;border:1px solid var(--line);background:var(--panel);padding:4px 10px;border-radius:999px;color:var(--ink)}
+.toc a:hover{border-color:var(--accent);color:var(--accent)}
+.nav-bottom{display:flex;justify-content:space-between;gap:10px;margin-top:34px;padding-top:18px;border-top:1px solid var(--line)}
+.nav-bottom button{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:9px 14px;cursor:pointer;font-size:14px}
+.nav-bottom button:hover{border-color:var(--accent);color:var(--accent)}
+/* lightbox */
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.86);display:none;place-items:center;z-index:100;padding:20px;cursor:zoom-out}
+.lb.open{display:grid}
+.lb img{max-width:96vw;max-height:88vh;width:auto;height:auto;border-radius:8px;background:#fff}
+.lb .cap{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#fff;font-size:14px;padding:0 20px}
+footer{color:var(--muted);font-size:13px;padding:20px 0 40px;border-top:1px solid var(--line)}
+@media (max-width:640px){
+  body{font-size:15.5px}
+  .card{padding:14px 15px}
+  .tile .v{font-size:22px}
+  .fm{font-size:15.5px}
+  .step{padding-left:48px}
+}
+@media print{.tabbar-wrap,.toolbar,.nav-bottom{display:none}.panel{display:block!important;page-break-before:always}}
+
+/* ── site theme (ljvvivian.net): cream + navy, Cormorant Garamond / Inter ── */
+:root{
+  --bg:#FAF8F3; --panel:#FFFFFF; --ink:#1C1C1E; --muted:#5A5A5A; --line:#EBE7DF;
+  --accent:#1D3A6B; --accent-soft:#EEF2F8; --orange:#A65A3A; --orange-soft:#F6ECE6;
+  --green:#3F6B4F; --green-soft:#EDF3EE; --amber:#8A6A1F; --amber-soft:#F6F0E1;
+  --code:#F3F1EC; --shadow:none; --r:6px;
+  --serif:'Cormorant Garamond',"Noto Serif SC","Songti SC",STSong,serif;
+  --sans:'Inter',"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141414; --panel:#1C1C1E; --ink:#ECEAE5; --muted:#A3A09A; --line:#2C2B29;
+    --accent:#9DB4DC; --accent-soft:#1E2635; --orange:#D9906E; --orange-soft:#33251E;
+    --green:#8DBB9C; --green-soft:#1B2A20; --amber:#D6B46A; --amber-soft:#2F2918;
+    --code:#232220;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141414; --panel:#1C1C1E; --ink:#ECEAE5; --muted:#A3A09A; --line:#2C2B29;
+  --accent:#9DB4DC; --accent-soft:#1E2635; --orange:#D9906E; --orange-soft:#33251E;
+  --green:#8DBB9C; --green-soft:#1B2A20; --amber:#D6B46A; --amber-soft:#2F2918;
+  --code:#232220;
+}
+body{font-family:var(--sans);font-size:15px;font-weight:400}
+h1,h2,.tile .v{font-family:var(--serif);font-weight:500;letter-spacing:-.005em;font-variant-numeric:lining-nums tabular-nums}
+h2{font-size:clamp(24px,3.4vw,32px)}
+h3,h4{font-weight:600}
+th,.note .t,details>summary,.flash .q{font-weight:600}
+
+.site-nav{display:flex;justify-content:space-between;align-items:center;padding:1rem 3rem;border-bottom:1px solid var(--line);background:var(--bg)}
+.site-nav .nav-logo{display:flex;align-items:center;text-decoration:none}
+.site-nav .nav-logo img{height:36px;width:36px;object-fit:contain}
+.site-nav .nav-logo-text{font-family:var(--serif);font-size:1.05rem;letter-spacing:.1em;color:var(--ink)}
+.site-nav .nav-links{display:flex;gap:1.8rem}
+.site-nav .nav-links a{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+.site-nav .nav-links a:hover{color:var(--ink)}
+
+.hero,:root[data-theme="dark"] .hero{background:var(--bg);color:var(--ink);padding:64px 0 36px}
+.hero h1{color:var(--ink);font-weight:400;font-size:clamp(30px,5vw,52px);line-height:1.15}
+.hero .sub{color:var(--muted);opacity:1;font-size:15.5px;line-height:1.8}
+.chip{background:transparent;color:var(--muted);border:1px solid var(--line);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:3px 10px}
+.btn{border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:4px;font-size:12.5px;letter-spacing:.04em}
+.btn:hover{background:var(--accent);color:var(--bg)}
+
+.tabbar-wrap{background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px)}
+.tabbar .glabel{font-size:10.5px;letter-spacing:.18em}
+.tab{border-radius:4px;font-size:13.5px}
+.tab[aria-selected="true"]{color:#fff}
+:root[data-theme="dark"] .tab[aria-selected="true"]{color:#141414}
+.card,.tile,.widget,.flash,details,.step,.say,.pipe .box,.toc a,.nav-bottom button{border-radius:var(--r)}
+.tile .v{font-family:var(--serif);font-weight:500;font-size:30px}
+.note{border-left-width:2px;border-radius:0 4px 4px 0}
+.fig img{border-radius:4px}
+.step::before{font-weight:500}
+footer{text-align:center;font-size:12px;line-height:1.9}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tab[aria-selected="true"]{color:#141414} }
+@media (max-width:640px){ .site-nav{padding:1rem 16px} .site-nav .nav-links{gap:1.1rem} .hero{padding:40px 0 28px} }
+
+/* language switch (globe + label), sits right of the nav links */
+.site-nav .nav-right{display:flex;align-items:center;gap:1.8rem}
+.lang-switch{display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;letter-spacing:.12em;color:var(--accent);text-decoration:none;border:1px solid var(--accent);border-radius:999px;padding:.28rem .7rem;transition:background .2s,color .2s}
+.lang-switch svg{width:14px;height:14px;flex:none}
+.lang-switch:hover{background:var(--accent);color:var(--bg)}
+@media (max-width:640px){ .site-nav .nav-right{gap:1rem} .lang-switch{padding:.25rem .55rem} }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@500&display=swap" rel="stylesheet">
+<link rel="alternate" hreflang="en" href="index.html">
+</head>
+<body>
+<nav class="site-nav">
+  <a href="../index.html" class="nav-logo"><img src="../logo.png" alt="Jiawei Lu" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" /><span class="nav-logo-text" style="display:none;">Way</span></a>
+  <div class="nav-right">
+    <div class="nav-links">
+      <a href="../cv.html">CV</a>
+      <a href="../flowers.html">Flowers</a>
+      <a href="../chat.html">Chat</a>
+    </div>
+    <a class="lang-switch" href="index.html" hreflang="en" lang="en" title="Read in English"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c1.8 1.8 2.7 4 2.7 6.5S9.8 12.7 8 14.5M8 1.5C6.2 3.3 5.3 5.5 5.3 8s.9 4.7 2.7 6.5"/></svg><span>EN</span></a>
+  </div>
+</nav>
+<header class="hero">
+  <div class="wrap">
+    <div class="meta">
+      <span class="chip">SJTU PRP · T010PRP43015</span>
+      <span class="chip">2023 → 2026</span>
+      <span class="chip">西昌市 · 四川</span>
+    </div>
+    <h1>从事故地图到出行需求模型：西昌项目完整讲解</h1>
+    <p class="sub">这个网页把两份报告拆开讲。每一步都回答五个问题：<b>为什么做、原理是什么、怎么做、得到什么数字、有什么局限</b>。每节最后附一段英文概述。</p>
+    <div class="toolbar">
+      <div class="meta">
+        <span class="chip">ArcGIS Pro</span><span class="chip">Python / GeoPandas</span><span class="chip">LightGBM + SHAP</span><span class="chip">AequilibraE</span><span class="chip">TransCAD 4.5 (GISDK)</span><span class="chip">VISSIM 5.3 + SSAM</span>
+      </div>
+      <div class="right">
+        <button class="btn" id="themeBtn" type="button">切换深色 / 浅色</button>
+        <button class="btn" id="expandBtn" type="button">展开全部折叠</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="tabbar-wrap"><div class="wrap">
+<nav class="tabbar" role="tablist" aria-label="章节">
+  <div class="grp"><button class="tab" role="tab" data-tab="overview"><span class="n">0</span>总览</button></div>
+  <div class="grp"><span class="glabel">第一阶段 · 事故风险</span>
+    <button class="tab" role="tab" data-tab="data"><span class="n">1</span>数据与清洗</button>
+    <button class="tab" role="tab" data-tab="descr"><span class="n">2</span>谁 · 何时</button>
+    <button class="tab" role="tab" data-tab="gis"><span class="n">3</span>GIS 空间分析</button>
+    <button class="tab" role="tab" data-tab="clq"><span class="n">4</span>区位商 CLQ</button>
+    <button class="tab" role="tab" data-tab="ml"><span class="n">5</span>机器学习</button>
+    <button class="tab" role="tab" data-tab="econ"><span class="n">6</span>经济学框架</button>
+  </div>
+  <div class="grp"><span class="glabel">第二阶段 · 需求模型</span>
+    <button class="tab" role="tab" data-tab="why2"><span class="n">7</span>为什么要第二阶段</button>
+    <button class="tab" role="tab" data-tab="fourstep"><span class="n">8</span>四步建模法</button>
+    <button class="tab" role="tab" data-tab="tools"><span class="n">9</span>AequilibraE 与 TransCAD</button>
+    <button class="tab" role="tab" data-tab="valid"><span class="n">10</span>验证与敏感性</button>
+    <button class="tab" role="tab" data-tab="exposure"><span class="n">11</span>暴露调整 SPF/EB</button>
+    <button class="tab" role="tab" data-tab="s2035"><span class="n">12</span>2035 情景</button>
+    <button class="tab" role="tab" data-tab="vissim"><span class="n">13</span>VISSIM + SSAM</button>
+  </div>
+</nav>
+</div></div>
+
+<main class="wrap">
+
+<section class="panel active" id="tab-overview" role="tabpanel">
+<h2>0 · 总览：一句话、一条流水线、一张分工表</h2>
+
+<div class="card">
+<h3>一段话概述</h3>
+<p class="lead">西昌市有 95 万人。2019 年接警事故 19,990 起。<b>第一阶段</b>（2023）我在 ArcGIS Pro 里做了三件事：核密度、Gi* 热点、协同区位商（CLQ）。CLQ 看事故类型和用地是否配对出现。我还参与用 SHAP 解释团队的 LightGBM 模型。地图说清了事故"在哪"。但说不清"为什么"。原因是没有交通量。没有交通量，"事故多"和"车多"分不开。<b>第二阶段</b>（2026）我建了一个示意级四阶段出行需求模型。它有 52 + 14 个小区。工具是 Python / AequilibraE。我用 TransCAD 复现，R² 0.9999。我把模型回推到 2019 年。我用车公里（VKT）做暴露量，也就是分母。再重做 HSM 式 SPF / EB 筛选。SPF 是安全性能函数，EB 是经验贝叶斯。结论翻了过来。航天大道事故数第一，按 EB 超额却排第 48。真正超额的是武大线和合盐路二段。"过境干道更危险"的风险比从 2.68 降到 1.22。而且不显著。最后我用 2035 情景和 VISSIM/SSAM 把宏观和微观串起来。方式转移 5 个百分点，可抵消约一半事故增量。保护左转使最差路口的交叉冲突减少 79%。</p>
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"A city of 950,000 logged 19,990 crashes in 2019. In Phase 1 I mapped them in ArcGIS Pro. I also helped interpret a LightGBM model with SHAP. The maps said where, not why. With no traffic volumes, 'many crashes' and 'many vehicles' looked the same. In Phase 2 I built a sketch-level four-step model. I replicated it in TransCAD. I back-cast it to 2019 and used vehicle-km as exposure in SPF/EB screening. The top road by count dropped to #48 in the ranking. The through-arterial excess vanished. A VISSIM/SSAM study of the worst junction showed that protected left turns cut crossing conflicts 79%."</p></div>
+</div>
+
+<h3>关键数字</h3>
+<div class="grid g4">
+  <div class="tile"><div class="v">19,990</div><div class="k">2019 年接警事故</div><div class="d">5,122 人伤亡；可定位 9,384 点</div></div>
+  <div class="tile"><div class="v">26% → 79%</div><div class="k">弱势出行者：事故占比 → 伤亡占比</div><div class="d">每起伤亡是纯机动车事故的 10.7 倍</div></div>
+  <div class="tile"><div class="v">10% / 48%</div><div class="k">最密集 10% 网格承载 48% 事故</div><div class="d">Gini 0.64；Gi* 热点 13% 网格含 65% 事故</div></div>
+  <div class="tile"><div class="v">52 + 14</div><div class="k">交通小区</div><div class="d">876 km 路网；117 万人次/日；3.20 M 车公里</div></div>
+  <div class="tile"><div class="v">0.9999</div><div class="k">TransCAD 复现 R²</div><div class="d">仅分配；%RMSE 1.7%；GEH&lt;5 占 99.7%</div></div>
+  <div class="tile"><div class="v">47 次</div><div class="k">敏感性运行</div><div class="d">26 OAT + 20 LHS；路段排名 Spearman 中位 0.99</div></div>
+  <div class="tile"><div class="v">2.68 → 1.22</div><div class="k">过境干道风险比 IRR</div><div class="d">加入车公里后不显著（p = 0.28）</div></div>
+  <div class="tile"><div class="v">#1 → #48</div><div class="k">航天大道：事故数排名 → EB 超额排名</div><div class="d">495 起 vs SPF 预测 592 起</div></div>
+  <div class="tile"><div class="v">+21% ~ +70%</div><div class="k">2035 车公里增长</div><div class="d">小汽车份额 −5 pt 可避免约一半事故增量</div></div>
+  <div class="tile"><div class="v">−79%</div><div class="k">保护左转：交叉冲突 / 千辆</div><div class="d">延误 −39%；20 个随机种子，p &lt; 0.001</div></div>
+</div>
+
+<h3>整条流水线</h3>
+<div class="pipe">
+  <span class="box p1" data-tab-go="data">接警记录 + POI</span><span class="arr">→</span>
+  <span class="box p1" data-tab-go="data">清洗 / 地理编码</span><span class="arr">→</span>
+  <span class="box p1" data-tab-go="gis">KDE · Gi* · 路网筛选</span><span class="arr">→</span>
+  <span class="box p1" data-tab-go="clq">CLQ / LCLQ</span><span class="arr">→</span>
+  <span class="box p1" data-tab-go="ml">LightGBM + SHAP</span><span class="arr">→</span>
+  <span class="box p1" data-tab-go="econ">经济学解读</span>
+</div>
+<div class="pipe">
+  <span class="box p2" data-tab-go="fourstep">人口网格 + OSM → TAZ</span><span class="arr">→</span>
+  <span class="box p2" data-tab-go="fourstep">四阶段模型</span><span class="arr">→</span>
+  <span class="box p2" data-tab-go="tools">TransCAD 复现</span><span class="arr">→</span>
+  <span class="box p2" data-tab-go="valid">47 组敏感性</span><span class="arr">→</span>
+  <span class="box p2" data-tab-go="exposure">车公里 → SPF / EB</span><span class="arr">→</span>
+  <span class="box p2" data-tab-go="s2035">2035 情景</span><span class="arr">→</span>
+  <span class="box p2" data-tab-go="vissim">VISSIM + SSAM</span>
+</div>
+<p class="legend">橙色是第一阶段。蓝色是第二阶段。每一步的输出是下一步的输入，每个参数都有出处。点击方块跳转。</p>
+
+<figure class="fig"><img src="img/framework_2023.jpg" alt="2023 研究框架" data-cap="2023 年答辩时的研究框架：左侧事故特征分析（时间、参与方、空间），右侧影响因素识别（中观路段用 KDE + LightGBM/SHAP，微观事故点用贝叶斯网络）。"><figcaption><b>图 0-1 2023 年答辩时的研究框架。</b>左边是"事故特征分析"。它回答谁、何时、何地。右边是"影响因素识别"。它分两层：中观看路段（KDE + LightGBM/SHAP），微观看事故点（贝叶斯网络）。2026 年重构时我把它改成"事故成本恒等式"框架。见第 6 节。</figcaption></figure>
+
+<h3>分工</h3>
+<div class="tbl-wrap"><table>
+<tr><th>工作</th><th>谁做的</th><th>说明</th></tr>
+<tr><td>2023 项目负责人、选题、数据对接</td><td><span class="mine">我</span></td><td>PRP 项目 T010PRP43015。导师汪涛。2023 年 2–9 月。两人团队。</td></tr>
+<tr><td>ArcGIS Pro 核密度 KDE、协同区位商 CLQ / LCLQ</td><td><span class="mine">我</span></td><td>独立完成。我主写《基于区位商的道路事故空间特性分析》。</td></tr>
+<tr><td>LightGBM 建模与训练</td><td><span class="team">队友</span></td><td>队友闵悦欣主写《基于 LightGBM 和 SHAP 的交通事故影响因素识别》。</td></tr>
+<tr><td>SHAP 结果解读</td><td><span class="mine">我</span> + <span class="team">队友</span></td><td>我负责把特征效应翻译成规划语言。</td></tr>
+<tr><td>贝叶斯网络（GeNIe）</td><td><span class="team">团队</span></td><td>只完成了变量离散化和网络结构。参数学习没有完成。重构报告不把它当作已完成模型。</td></tr>
+<tr><td>2026 重构报告（中英 LaTeX）、Gi* / Moran's I / NB 残差 / OSM 路网筛选 / 25 组 LCLQ 重绘</td><td><span class="mine">我</span></td><td>独立完成。LightGBM 和 DTW 聚类无法重跑。原因是原始微观数据已丢失。</td></tr>
+<tr><td>2026 第二阶段：四阶段模型、TransCAD 复现、敏感性、SPF/EB、2035、VISSIM/SSAM</td><td><span class="mine">我</span></td><td>独立完成。</td></tr>
+</table></div>
+
+<h3>工具与版本</h3>
+<div class="kv">
+<dt>GIS</dt><dd>ArcGIS Pro 做 KDE、Hot Spot、Colocation Analysis。可复现部分用 Python GeoPandas / osmnx / contextily。</dd>
+<dt>统计 / ML</dt><dd>statsmodels 做负二项 GLM。LightGBM + SHAP TreeExplainer 由队友训练。GeNIe 做贝叶斯网络结构。</dd>
+<dt>需求模型</dt><dd>出行生成、出行分布（重力模型）、方式划分用 Python numpy 自写。AequilibraE 1.7 算 skim，做 bi-conjugate Frank–Wolfe 分配。TransCAD 4.5 用 GISDK 宏复现。</dd>
+<dt>微观仿真</dt><dd>PTV VISSIM 5.30 学生版。.inp 文件由脚本生成，89 个冲突区也由脚本写入。冲突分析用 FHWA SSAM 3。</dd>
+<dt>报告</dt><dd>XeLaTeX 中英双版。所有数字引用脚本生成的宏文件，不手填。</dd>
+</div>
+
+<div class="note"><span class="t">怎么用这个网页</span>第 1–6 节是第一阶段（事故风险）。第 7–13 节是第二阶段（需求模型）。每节顺序都一样："原理 → 本项目怎么做 → 结果 → 局限 → 英文概述"。图片点击可放大。</div>
+</section>
+
+<section class="panel" id="tab-data" role="tabpanel">
+<h2>1 · 数据与清洗：接警记录怎么变成能分析的点</h2>
+<p class="lead">原始数据不是事故数据库。它是公安局的<b>接警记录</b>：自由文本、地标式地址、没有伤害分级。要把它变成能做空间分析的数据，我走了四步。文本结构化 → 地理编码 → 评估定位精度和"聚堆" → 关联到路段和网格。</p>
+
+<h3>四组原始数据</h3>
+<div class="tbl-wrap"><table>
+<tr><th>数据</th><th>规模</th><th>字段</th><th>用途 / 局限</th></tr>
+<tr><td>事故接警记录（西昌市公安局，2019 全年）</td><td>19,990 条</td><td>接警时间；事发地址（文字）；报警内容（自由文本，例如"小车川W×××撞摩托车 受伤 2 人"）。另外匹配当日天气、路面、昼夜、路灯数、可见度。</td><td>全部点层面分析用它。它是接警，不是事故认定书。伤害没有分级。地址精度不一。</td></tr>
+<tr><td>路段数据</td><td>2,847 条</td><td>道路管理等级、车道数、形态、隔离、流向。缓冲区内办公 / 商业 / 居住 POI 数、WorldPop 人口、夜间灯光。到火车站 / 机场 / 长途站的距离。事故数。</td><td>LightGBM 频次模型用它。没有交通量。</td></tr>
+<tr><td>POI（高德地图）</td><td>28,847 个</td><td>商业 6 小类（购物、餐饮、生活服务、医疗、科教、体育）、居住 2 类（住宿、商务住宅）、办公 2 类（公司企业、政府机构）</td><td>CLQ 和网格相关分析用它。POI 代表活动强度，不是暴露量。</td></tr>
+<tr><td>OSM 路网、铁路、水系、枢纽（2026 下载）</td><td>6,168 段</td><td>等级、名称</td><td>制图底图和路网吸附用它。注意这是 2026 年路网，不是 2019 年。</td></tr>
+</table></div>
+<details><summary>事故点字段字典（附录 A）</summary><div class="body">
+<p><code>crush ID</code>、<code>location</code>（地标或路段描述）、<code>date / time of day / hours</code>（0–23）、<code>weather</code>（晴 / 多云 / 小雨 / 中雨 / 大雨）、<code>road surface</code>（干 / 湿）、<code>types of crashes</code>（碰撞 angle / 擦挂 sideswipe / 追尾 rear-end / 翻车 rollover / 其他）、<code>lighting condition</code>（日间 / 夜间）、<code>streetlight</code>（路灯数）、<code>visibility</code>、<code>first / second participant</code>（机动车 / 大型车 / 两轮 / 三轮 / 行人 / 其他）、<code>injuries</code>。</p>
+<p>事故类型中只有三类留存了几何：碰撞 6,306、追尾 2,420、翻车 658。合计 9,384 点。擦挂和"其他"没有坐标。所以"19,990 → 9,384"不是定位失败。只是几何只保留了三类。</p>
+</div></details>
+
+<h3>清洗流程（Messy data → analysis-ready）</h3>
+<div class="steps">
+  <div class="step"><b>文本字段标准化</b>2023 年我们用关键词规则加人工校核。从报警内容提取三样：碰撞类型（5 类）、第一 / 第二参与者（6 类）、伤亡人数。分类口径：小型汽车 = 机动车；货车 / 客车 = 大型车；自行车 / 电动自行车 / 摩托车 = 两轮非机动车；三轮；行人；"其他" = 单车撞障碍物或建筑。</div>
+  <div class="step"><b>环境变量匹配</b>按日期匹配当日天气、路面干湿、昼夜。路灯数和可见度来自路段信息。注意：天气表合计只有 <b>361 天</b>（晴 135、多云 46、小雨 151、中雨 24、大雨 5）。这说明少数日期天气缺失。</div>
+  <div class="step"><b>地理编码（geocoding）</b>我用高德地图 API 把文字地址解析成 WGS84 坐标，存入 GDB。重构时投影到 UTM 48N（EPSG:32648）。地址多是"××酒店门口""××路"这类地标或路段描述。所以坐标常落在地标点或路段中部。</div>
+  <div class="step"><b>定位质量评估：聚堆（stacking）</b>9,384 个点只有 <b>1,992 个不同坐标</b>。单个坐标最多叠加 <b>197 起</b>。我把点吸附到 2019 模型路网（30 m 内）。结果：57% 落在模型路段上；20% 落在模型不含的支路小巷，多在老城；22% 离任何道路 &gt;30 m。</div>
+  <div class="step"><b>OSM 吸附与交叉口判定</b>用 <code>sjoin_nearest</code> 在 60 m 内匹配，匹配率 77.6%。其中 55.6% 在有名称的道路上。交叉口定义为度 ≥3 的节点，范围 30 m。交叉口相关事故只占 12.9%。国际城市道路的经验值是 40–50%。这个差距是<b>数据口径造成的 artefact</b>，不是西昌的特殊性。</div>
+  <div class="step"><b>路段切分（2023）</b>我在 ArcGIS Pro 中按交叉口切分全市道路。超过 2 km 的路段再按 2 km 等分。合并清洗后得到 2,847 个分析单元。每个单元汇总道路属性、缓冲区用地强度和事故数。</div>
+  <div class="step"><b>GDB 图层核对（2026）</b>图层 <code>Angle_商业_餐饮</code> 实际只有 2,425 行。它其实是<b>追尾</b>点，标签贴错了。重构脚本用"行数 &lt; 5,000"自动识别并剔除。我不把它当作"碰撞 × 餐饮"使用。碰撞 × 办公、碰撞 × 居住共 5 组 LCLQ 结果没有留存。所以附录只有 25 组。</div>
+  <div class="step"><b>边界裁剪与跨年一致性检验</b>我把所有点裁到西昌市面边界。用 2026 路网吸附 2019 事故会不会出错？我查了：30 m 内最近路段是 2019 年后新开通道路的只有 83 起（0.9%）。其中真正的新建道路只有 32 起。影响可以忽略。</div>
+</div>
+
+<figure class="fig"><img src="img/map_overview.jpg" alt="研究区概览" data-cap="(a) 西昌市域主要道路与三类事故点，附四川/凉山定位图；(b) 中心城区路网、铁路、水系、火车站/客运站和事故点。"><figcaption><b>图 1-1 研究区概览。</b>(a) 市域：事故沿 G5 / G108 / G348 走廊和中心城区集中。(b) 中心城区：注意点的"聚堆"。很多点其实是几十起事故叠在同一个地标坐标上。</figcaption></figure>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"The data were police call records with free text and landmark addresses. We extracted crash type, participants and injuries with keyword rules plus manual checks. We geocoded the addresses with the AMap API. Then I audited location quality. The 9,384 points sat on only 1,992 unique coordinates, up to 197 crashes per point. Only 13% could be linked to intersections, versus 40–50% internationally. So I report intersection rankings as 'crashes that could be located to a junction', not full junction risk. I also found a mislabelled layer in the geodatabase by its row count and excluded it."</p></div>
+
+<div class="note warn"><span class="t">局限</span>
+<ul style="margin:0">
+<li>接警口径比官方事故统计宽得多。它包含大量仅财产损失的轻微事故。"伤亡数"是<b>受伤人次</b>，不能换算成死亡。</li>
+<li>空间分析对地标附近的点有聚集性偏差。路口排名应读作"能定位到路口的事故"排名。</li>
+<li>我没有保留文本提取的抽检准确率。也没有记录地理编码失败率。</li>
+<li>原始微观数据结题后没有保存。2026 年只能用四样东西重算：汇总表、GDB 里的 9,384 个点、LCLQ 结果、28,847 个 POI。LightGBM 和 DTW 聚类无法重跑。</li>
+</ul></div>
+</section>
+
+<section class="panel" id="tab-descr" role="tabpanel">
+<h2>2 · 谁受伤、何时发生：描述统计里的三个"反直觉"</h2>
+<p class="lead">描述统计不只是画柱状图。这一节的三个结论都靠<b>选对暴露量</b>才成立。暴露量就是分母。严重程度用每起伤亡人数，天气用天数。昼夜没有暴露量，这是一个局限。</p>
+
+<h3>2.1 参与者组合与严重程度</h3>
+<div class="card">
+<h4>原理</h4>
+<p>数据里没有伤害分级。所以我用<b>每起事故伤亡人数</b>代表严重程度 K/N。k 是伤亡人数，n 是事故数。率 k/n 的 95% 置信区间用 Garwood 精确泊松区间：</p>
+<div class="fm">[ χ²<sub>0.025</sub>(2k) / 2n ,　χ²<sub>0.975</sub>(2k+2) / 2n ]</div>
+<h4>做法与结果</h4>
+<p>我做了 6 × 6 的参与者组合矩阵。矩阵对称，只看上三角。每格算 k/n 和置信区间。</p>
+<ul>
+<li>机动车 × 机动车 11,407 起（57%）。每起只有 0.06 人伤亡。</li>
+<li>最危险的组合是<b>大型车 × 行人</b>：70 起，143 人。每起 <b>2.04 人</b>（CI 1.72–2.41）。这是全市均值 0.26 的 8 倍。其后是行人 × 三轮 1.11、行人 × 两轮 1.07、机动车 × 行人 1.04。机动车 × 两轮每起 0.66，但基数大。它的伤亡 1,746 人，占全部伤亡三分之一。</li>
+<li>涉弱势者事故 <b>5,223 起（26.1%）→ 4,050 人伤亡（79.1%）</b>，每起 0.78 人。非弱势事故 14,767 起 → 1,072 人，每起 0.07 人。两者比值 <b>10.7 倍</b>。所有涉弱势组合都显著高于均值。所有纯机动化组合都显著低于均值。两组的 CI 不重叠。</li>
+</ul>
+<p><b>经济学读法</b>：不对称碰撞中，边际外部成本几乎全由重的一方造成（Lindberg 2001）。轻的一方承担这些成本。所以矫正政策应针对重的一方：限速、限行、路权、物理隔离。政策不应落在对弱势方做"安全教育"上。</p>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/burden.png" alt="burden" data-cap="弱势出行者占事故 26%、伤亡 79%。"><figcaption><b>图 2-1 负担图。</b>这里按参与方计，一起事故计两方。机动车占 65% 的参与方席位，伤亡只占 40%。两轮非机动车、行人、三轮合计占约 21% 席位，却承担约 51% 伤亡。按事故计，就是正文的 26% → 79%。</figcaption></figure>
+<figure class="fig"><img src="img/participants_severity.png" alt="severity" data-cap="参与者组合按每起伤亡排序，带泊松 95% CI；橙色涉弱势者，蓝色纯机动化。"><figcaption><b>图 2-2 组合严重程度。</b>橙色是涉弱势者组合，全部在均值线上方。蓝色是纯机动化组合，全部在下方。两组置信区间不重叠。</figcaption></figure>
+</div>
+<figure class="fig half"><img src="img/participants_heatmap.png" alt="heatmap" data-cap="(a) 组合事故数（对数色标）；(b) 每起伤亡人数。"><figcaption><b>图 2-3 参与者矩阵。</b>(a) 事故数集中在机动车 × 机动车。(b) 每起伤亡集中在大型车 × 行人。两张图几乎互为镜像。</figcaption></figure>
+
+<h3>2.2 天气：暴露混淆与风险补偿</h3>
+<div class="card">
+<h4>原理</h4>
+<p>直接比较各天气的事故总数不对。总数会被<b>天数</b>混淆。我用该天气的天数做暴露量。然后算日均事故率，再算相对晴天的<b>率比</b>（rate ratio）：</p>
+<div class="fm">RR = (a / t<sub>a</sub>) / (b / t<sub>b</sub>)　　se(ln RR) = √(1/a + 1/b)　　95% CI = exp(ln RR ± 1.96 · se)
+<span class="ex">这是泊松假设下的对数尺度 Wald 区间。</span></div>
+<div class="tbl-wrap"><table>
+<tr><th>天气</th><th>天数</th><th>事故</th><th>日均</th><th>RR vs 晴</th><th>95% CI</th><th>夜间占比</th></tr>
+<tr><td>晴</td><td>135</td><td>7,652</td><td>56.7</td><td>1.00</td><td>—</td><td>21.0%</td></tr>
+<tr><td>多云</td><td>46</td><td>2,574</td><td>56.0</td><td>0.99</td><td>[0.94, 1.03]</td><td>19.7%</td></tr>
+<tr><td>小雨</td><td>151</td><td>8,155</td><td>54.0</td><td><b>0.95</b></td><td>[0.92, 0.98] p = 0.002</td><td>20.6%</td></tr>
+<tr><td>中雨</td><td>24</td><td>1,283</td><td>53.5</td><td><b>0.94</b></td><td>[0.89, 1.00] p = 0.05</td><td>18.9%</td></tr>
+<tr><td>大雨</td><td>5</td><td>326</td><td>65.2</td><td><b>1.15</b></td><td>[1.03, 1.29] p = 0.013</td><td>19.0%</td></tr>
+</table></div>
+<p>2023 年原报告说"小雨天事故最多（8,155 起，41%）"。这是典型的暴露混淆。小雨日有 151 天，比晴天 135 天还多。调整天数后，小雨和中雨日的事故率反而比晴天低 5–6%。只有大雨显著更高。这符合<b>风险补偿</b>（Peltzman 1975）。司机能感知轻度路面风险。他们会减速、拉大车距、减少出行，抵消了风险。大雨时能见度骤降、路面积水。这超出了补偿能力。</p>
+<p><b>规划含义</b>：雨天宣传教育的边际收益低。有效的做法是降低大雨时的物理风险。例如排水、抗滑路面、积水点标识、暴雨预警期干道管控。</p>
+</div>
+<figure class="fig half"><img src="img/weather_rates.png" alt="weather" data-cap="(a) 各天气日均事故（日/夜堆叠）和天数；(b) 率比 vs 晴 + 95% CI。"><figcaption><b>图 2-4 天气率比。</b>只有大雨的置信区间整体在 1 以上。大雨日只有 5 天，所以区间很宽。这需要多年数据验证。</figcaption></figure>
+
+<h3>2.3 昼夜、季节与日内节律</h3>
+<ul>
+<li><b>昼夜</b>：日间 15,891 起，夜间 4,099 起（20.5%）。夜间占比在五种天气下几乎不变（19–21%）。这说明天气效应和昼夜效应可加，没有交互。按 12 小时对分，日间事故率是夜间的 3.9 倍。这个差距绝大部分来自暴露量。夜间交通量通常只有日间的 15–25%。我没有分时交通量。所以无法评估路灯的边际收益。</li>
+<li><b>年内</b>：1–6 月低而平稳。7 月起上升，8 月处于高位，原因是暑期旅游。10 月再抬升。12 月到峰值，原因是安宁河谷冬季多雾。</li>
+<li><b>日内</b>：0–6 时极少。7 时陡升。8 时和 18 时是双峰。20 时后回落。</li>
+</ul>
+<details><summary>DTW 聚类（2023 原始分析，无法重跑）：路段的"事故节律"分三类</summary><div class="body">
+<p><b>原理</b>：DTW（dynamic time warping）是一种距离度量。它允许两条时间序列在时间轴上伸缩对齐。所以它能容忍峰值错位。每条路段有一个 168 小时（一周）的事故序列。我对序列两两算 DTW 距离，再做 k-medoids 聚类。簇数 k 由两个指标共同选定：平均 DTW 距离和轮廓系数 S = (b − a) / max(a, b)。a 是到同簇其他点的平均距离。b 是到最近其他簇的平均距离。</p>
+<p><b>结果</b>：k = 3。三个簇正好对应三个事故密度层级。<b>稀疏</b>路段（周均 &lt; 2.5 起）没有日内模式，近似随机。<b>中等</b>路段（&lt; 5）只有晚高峰单峰。<b>密集</b>路段（&lt; 10）有早晚双峰，凌晨也不为零。含义：密集路段的安全投入可以按时段配置，例如高峰配时、执法。稀疏路段只能按空间配置，例如工程措施。</p>
+<div class="figrow">
+<figure class="fig"><img src="img/cluster_weekly.png" alt="DTW clusters" data-cap="灰线为各路段 168 小时序列，彩线为簇内中位数；a 稀疏、b 中等、c 密集。"><figcaption><b>图 2-5 三类周节律。</b>2023 年原图。</figcaption></figure>
+<figure class="fig"><img src="img/dtw_selection.png" alt="DTW k selection" data-cap="簇数选择：平均 DTW 距离与轮廓系数。"><figcaption><b>图 2-6 簇数选择。</b></figcaption></figure>
+</div>
+</div></details>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"Vulnerable road users were in 26% of crashes but took 79% of the injuries. Rain looked dangerous by raw counts. Then I divided crashes by the number of days with each weather. Light and moderate rain had lower crash rates than clear days. This is consistent with risk compensation. Only heavy rain was significantly higher. Throughout, I used Garwood Poisson intervals and rate ratios, not raw counts."</p></div>
+
+<div class="note warn"><span class="t">局限</span>一起事故计两方，所以参与者份额之和 &gt; 100%。数据没有年龄、头盔、车速信息。大雨只有 5 天。天气合计 361 天。昼夜没有暴露量。DTW 和日内图直接引用 2023 年版本。</div>
+</section>
+
+<section class="panel" id="tab-gis" role="tabpanel">
+<h2>3 · GIS 空间分析：从"点"到"热点"到"路段"</h2>
+<p class="lead">空间分析分三层。第一层是<b>连续面</b>：用核密度 KDE 看事故在哪里集中。第二层是<b>网格统计</b>。Gi* 和 Moran's I 回答"集中是不是显著"。洛伦兹曲线回答"有多集中"。第三层是<b>路网</b>：把事故点吸附到 OSM 路段和路口。路段和路口才是工程能操作的单位。</p>
+<div class="toc"><a href="#g-kde">KDE</a><a href="#g-gini">集中度</a><a href="#g-gi">Gi* 与 Moran's I</a><a href="#g-net">路网筛选</a><a href="#g-poi">POI 与负二项残差</a></div>
+
+<h3 id="g-kde">3.1 核密度估计（Kernel Density Estimation）</h3>
+<div class="card">
+<h4>原理</h4>
+<p>在每个事故点上放一个平滑的"核"，像一个小山包。所有小山包叠加，就成了连续的密度面：</p>
+<div class="fm">f(s) = 1 / (n h²) · Σ<sub>i</sub> K( ‖s − s<sub>i</sub>‖ / h )
+<span class="ex">h 是带宽（bandwidth）。带宽太小，噪声多，每个点一个小山。带宽太大，热点被抹平。本项目先把点落到 100 m 网格计数。再用 σ = 250 m 的高斯核平滑。最后除以面积，得到 起/km²。带宽在 150–400 m 之间时，热点位置不变。带宽只影响峰值大小。</span></div>
+<figure class="fig"><img src="img/kde_explainer.png" alt="KDE explainer" data-cap="KDE 原理：每个点铺开成小山包，叠加成密度面。"><figcaption><b>图 3-1 KDE 原理示意。</b></figcaption></figure>
+<h4>2023 vs 2026 的差别</h4>
+<ul>
+<li><b>2023</b>：用 ArcGIS Pro 的 Kernel Density 工具，搜索半径 0.01。坐标系是 WGS84，所以这是 0.01 度 ≈ 1.1 km。输出单位是"每平方度"，没有物理意义。所以当时报告里出现了 273,500 这类峰值。</li>
+<li><b>2026</b>：先投影到 UTM 48N。用 250 m 高斯核、100 m 网格。密度单位是 起/km²。每类事故用独立色标。</li>
+</ul>
+<h4>结果</h4>
+<p>三类事故共享一个核心区。核心区是老城商业区，由长安中路、长安南路、航天大道一段、三岔口南路围合。核心区还包括沿长安路的走廊：向东到东客运站，向西到西客站。峰值密度：碰撞 &gt; 300 起/km²，追尾约 180，翻车只有 25。碰撞和追尾沿主干道线状延伸，在路口结节。翻车更分散。翻车在城外 G5 经久乡段、G348 合盐路段独立聚集。原因是弯道和坡道。</p>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/kde_all.jpg" alt="KDE all" data-cap="中心城区全部事故的核密度（n = 9,384），标注主要枢纽与事故最多路口。"><figcaption><b>图 3-2 全部事故 KDE。</b>航天大道 × 胜利南路（77 起）是全市事故最多的路口。它后来成为 VISSIM 仿真对象。</figcaption></figure>
+<figure class="fig"><img src="img/map_kde.jpg" alt="KDE by type" data-cap="碰撞 / 追尾 / 翻车三幅 KDE，各自独立色标。"><figcaption><b>图 3-3 分类型 KDE。</b>翻车的峰值只有碰撞的十二分之一。翻车也更分散。</figcaption></figure>
+</div>
+
+<h3 id="g-gini">3.2 有多集中：洛伦兹曲线与基尼系数</h3>
+<div class="card">
+<p>我把有事故的 250 m 网格按事故数降序排列。然后画累计曲线。三类合计有 830 个有事故网格。最密集的 5% 网格承载 32% 事故，10% 承载 48%，20% 承载 67%。三类合计的 <b>Gini 0.64</b>。分类型看：碰撞 0.59、追尾 0.57、翻车 0.41。</p>
+<p><b>边际收益曲线的读法</b>：覆盖前 10% 网格，就触及近一半事故。这些网格约 80 个，约 5 km²。再加 10% 网格，只新增 19 个百分点。此后每加 10% 网格，不到 10 个百分点。这是"核心区 30 km/h 区"建议的直接依据。</p>
+<p class="legend">局限：可变面元问题（MAUP）。网格大小会改变 Gini 和相关系数。网格在 100–500 m 之间时，结论方向稳定。但我没有系统报告敏感性。</p>
+</div>
+<figure class="fig half"><img src="img/concentration_lorenz.png" alt="Lorenz" data-cap="250 m 网格事故洛伦兹曲线与基尼系数。"><figcaption><b>图 3-4 洛伦兹曲线。</b></figcaption></figure>
+
+<h3 id="g-gi">3.3 集中是否显著：Moran's I 与 Getis-Ord Gi*</h3>
+<div class="card">
+<h4>全局 Moran's I（Moran 1948）</h4>
+<div class="fm">I = (n / S<sub>0</sub>) · Σ<sub>i</sub>Σ<sub>j</sub> w<sub>ij</sub> z<sub>i</sub> z<sub>j</sub> / Σ<sub>i</sub> z<sub>i</sub>²　　z<sub>i</sub> = x<sub>i</sub> − x̄,　S<sub>0</sub> = Σ<sub>i</sub>Σ<sub>j</sub> w<sub>ij</sub>
+<span class="ex">I &gt; 0 是正空间自相关，相似值聚集。I &lt; 0 是负相关。I ≈ 0 是随机。显著性用随机置换检验。我把属性值在网格间打乱 999 次。然后看观测 I 落在置换分布的哪里。</span></div>
+<h4>局部 Getis-Ord Gi*（Getis &amp; Ord 1992）</h4>
+<div class="fm">G<sub>i</sub>* = ( Σ<sub>j∈N<sub>i</sub></sub> x<sub>j</sub> − x̄ |N<sub>i</sub>| ) / ( S · √[(n|N<sub>i</sub>| − |N<sub>i</sub>|²) / (n − 1)] )　　S = √( Σ<sub>j</sub> x<sub>j</sub>² / n − x̄² )
+<span class="ex">对网格 i 和它的邻域计算。邻域含自身，Queen 邻接 = 3 × 3 窗口。零假设下，统计量近似标准正态。|G<sub>i</sub>*| &gt; 1.645 / 1.96 / 2.576 对应 90 / 95 / 99% 置信水平。正值是热点，负值是冷点。</span></div>
+<p><b>Gi* 和 KDE 的区别</b>：KDE 是密度。它只告诉你"这里多"。Gi* 是统计量。它告诉你"这里和邻居一起高"，而且高到不像随机。Gi* 看邻域之和与全局均值的偏离。所以一个孤立的高值格不一定是热点。一片中等偏高的连片区域反而可能是热点。</p>
+<h4>做法与结果</h4>
+<p>中心城区有 1,188 个 250 m 网格。Gi* 用 3 × 3 卷积。Moran's I 用 Queen 邻接，不含自身，999 次置换。结果 <b>Moran's I = 0.29（p = 0.001）</b>。95% 以上的热点有 <b>156 个网格</b>，其中 128 个达 99%。它们占网格 13%，含 <b>65% 的事故</b>（3,764 起）。热点连成一条"热点带"：西客站 → 长安路 → 老城商业区 → 东客运站 → 沿航天大道向东南。没有显著冷点。</p>
+<div class="note warn"><span class="t">多重比较的局限</span>ArcGIS 的 Hot Spot Analysis 提供 FDR（false discovery rate）校正。FDR 校正应对多重检验和空间依赖造成的假阳性膨胀。<b>我的重构脚本没有做 FDR 校正</b>。我直接按 z 阈值分类。空间自相关会让标准显著性检验偏于乐观。</div>
+</div>
+<figure class="fig"><img src="img/map_hotspot_residual.jpg" alt="Gi* and residual" data-cap="(a) Getis-Ord Gi* 热点（250 m 网格，Moran's I = 0.29）；(b) 超出 POI 活动量预期的事故（负二项残差）。"><figcaption><b>图 3-5 热点 vs 残差。</b>(a) 热点带连成一片老城。(b) 控制 POI 活动量后，"超出预期"的网格跳到过境干道上。这些干道是武大线、航天大道、丹桂桥、一环路。第二阶段要重做这张图。</figcaption></figure>
+
+<h3 id="g-net">3.4 路网筛选：吸附到 OSM 路段与路口</h3>
+<div class="card">
+<p><b>为什么要做</b>：工程措施按道路和路口实施。网格热点对工程不可操作。所以我把事故点吸附（snap）到最近路段。然后按道路名汇总事故数和每公里事故数。每公里事故数的暴露量是同名道路的 OSM 总里程。路口 = 度 ≥ 3 的节点。路口 30 m 内的事故计为"路口相关"。</p>
+<p><b>做法</b>：用 osmnx 取核心区 drive 路网 3,424 段，加市域国省道 / 主干路 2,744 段。投影到 UTM 48N。吸附用 <code>geopandas.sjoin_nearest(max_distance=60)</code>。道路名取 OSM 的 <code>name</code> 字段。</p>
+<p><b>结果</b></p>
+<ul>
+<li>前 15 条道路占里程 <b>8.7%</b>，承载 <b>33%</b> 的匹配事故。按事故数排：航天大道 534 起（9 起/km）、武大线 288、一环路 218、合盐路二段 206、海滨中路 159。但<b>每公里</b>最高的是老城短街。长安路 88 起/km、长安东路 70、春城路 55、长安中路 53。</li>
+<li>按 OSM 等级：trunk 16.9 起/km、secondary 13.4、tertiary 8.2、primary 只有 6.0。<b>密度和等级不单调</b>。</li>
+<li>翻车前三都是过境干道：风箱口桥段 33、武大线 28、航天大道 27。</li>
+<li>路口：<b>航天大道 × 胜利南路 77 起</b>居首，其中碰撞 42、追尾 33。第二名只有 36 起。前 15 个路口占可定位到路口事故的 47%。</li>
+</ul>
+<p class="legend">局限：路网是 2026 年的。路口相关比例 12.9% 是地理编码口径造成的。同名道路会稀释每公里密度，例如航天大道 OSM 合并里程 58.6 km。</p>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/map_network.jpg" alt="network screening" data-cap="路段按每公里事故数着色，橙圈为前 15 路口。"><figcaption><b>图 3-6 路网筛选。</b>线宽和颜色随 起/km 变化。橙圈是前 15 个路口，前 8 个有编号。</figcaption></figure>
+<figure class="fig"><img src="img/top_roads.png" alt="top roads" data-cap="事故最多的前 15 条道路。"><figcaption><b>图 3-7 前 15 条道路。</b>这是按事故数的排名。第二阶段加入暴露量后，榜单会重排。</figcaption></figure>
+</div>
+
+<h3 id="g-poi">3.5 建成环境：POI 相关、负二项残差、枢纽距离带</h3>
+<div class="card">
+<h4>负二项回归（Negative Binomial）原理</h4>
+<p>事故计数过度离散，方差 &gt; 均值。所以泊松模型不合适。我用负二项模型：</p>
+<div class="fm">E[crash<sub>i</sub>] = μ<sub>i</sub> = exp(β<sub>0</sub> + β<sub>1</sub> ln(1 + POI<sub>i</sub>))　　Var = μ + α μ²<br>
+皮尔逊残差 z<sub>i</sub> = (y<sub>i</sub> − μ̂<sub>i</sub>) / √(μ̂<sub>i</sub> + α μ̂<sub>i</sub>²)
+<span class="ex">β<sub>1</sub> 是对数弹性：POI 增加 1% → 事故增加 β<sub>1</sub>%。z &gt; 2 的网格记为"显著高于活动量预期"。这对应恒等式里的"风险"部分，不是"暴露量"部分。</span></div>
+<h4>结果</h4>
+<ul>
+<li>500 m 网格的 Spearman ρ = <b>0.82</b>。最密集五分位每格 87 起，最稀疏 1.7 起。</li>
+<li>但<b>单位活动事故随密度下降</b>：每 100 个 POI 的事故数从 Q1 113 → Q5 23。密度对安全是正外部性，因为车速低。这个效应被活动总量掩盖了。</li>
+<li>NB 结果：β<sub>1</sub> = <b>0.65</b>（s.e. 0.04），α = 2.0。z &gt; 2 的超额网格有 <b>33 个</b>。它们实际 1,484 起，预期 204 起。前 8 个超额网格几乎全在过境干道：武大线、丹桂桥、一环路、航天大道。武大线的网格：77 起 / 2 个 POI / 预期 2.2 / z 21.3。</li>
+<li>枢纽：客运站 1 km 内的密度是 2–3 km 带的 10 倍。但每 100 POI 事故在各环带持平（25–35）。所以客运站的高密度完全由活动强度解释。<b>火车站</b>不同：0–0.5 km 每 100 POI 52 起，向外单调下降到 27。这说明站前区域自身有风险。原因是出租、三轮、行人、接送车混行。</li>
+</ul>
+<div class="note org"><span class="t">这个结论后来被收窄</span>2023–2026 年初的解读是：过境干道超出活动量预期，说明道路本身有风险。但 POI 看不到过境车流。第二阶段加入车公里（VKT）后，"过境干道"作为类别不再显著。只有少数具体地点仍然超额。见第 11 节。</div>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/poi_vs_crash.png" alt="POI vs crash" data-cap="(a) POI 与事故对数散点 ρ = 0.82；(b) 五分位每格事故；(c) 每 100 POI 事故。"><figcaption><b>图 3-8 POI 与事故。</b>(a)(b) 事故随活动量上升。(c) 单位活动事故随密度下降。</figcaption></figure>
+<figure class="fig"><img src="img/hub_bands.png" alt="hub bands" data-cap="火车站与客运站各距离带的事故密度和每 100 POI 事故。"><figcaption><b>图 3-9 枢纽距离带。</b>客运站的高密度可由活动量解释。火车站的不能。</figcaption></figure>
+</div>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"I used ArcGIS Pro for kernel density by crash type, Getis-Ord Gi* and Moran's I. I also used it for colocation quotients between crash types and POI types, and for maps for non-technical readers. I used Python GeoPandas for the reproducible parts. I snapped 9,000 crashes to OSM to rank roads and intersections. I also did grid statistics and negative-binomial residual maps. One insight: the hot-spot and colocation analysis showed where crashes 'live'. The demand model later showed how much of that was simply exposure."</p></div>
+</section>
+
+<section class="panel" id="tab-clq" role="tabpanel">
+<h2>4 · 协同区位商（Colocation Quotient, CLQ / LCLQ）<span class="mine">我独立完成</span></h2>
+<p class="lead">问题："碰撞事故是不是更爱发生在购物中心旁边？"直接数缓冲区里的 POI 不行，购物 POI 本来就多。CLQ 用<b>"A 附近 B 的比例"</b>除以<b>"B 在全市的比例"</b>，这样就控制了 B 的数量。它是<b>非对称</b>的，有<b>局部版本</b>和<b>置换检验</b>。</p>
+
+<div class="card">
+<h3>全局 CLQ</h3>
+<p>这张卡讲 CLQ 的定义和出处。Leslie &amp; Kronenfeld (2011) 提出全局 CLQ。Cromley, Hanink &amp; Bentley (2014) 提出地理加权版本。Wang et al. (2017) 提出带置换检验的局部 CLQ。ArcGIS Pro 的 "Colocation Analysis" 工具就基于 Wang 这一版。</p>
+<div class="fm">CLQ<sub>A→B</sub> = ( C<sub>A→B</sub> / N<sub>A</sub> ) / ( N'<sub>B</sub> / (N − 1) )　　C<sub>A→B</sub> = Σ<sub>i∈A</sub> Σ<sub>j≠i</sub> w<sub>ij</sub> · 1[j ∈ B]
+<span class="ex">N<sub>A</sub>、N<sub>B</sub> 是两类点的数量，N 是总点数。N'<sub>B</sub> = N<sub>B</sub>（A ≠ B 时），或 N<sub>B</sub> − 1（A = B 时）。原因是一个点不能当自己的邻居。分子是 A 点邻域内 B 的观测比例。分母是随机情形下 B 的期望比例。CLQ &gt; 1 是协同定位（colocation）。CLQ &lt; 1 是隔离（isolation）。CLQ = 1 是随机。CLQ 是非对称的：CLQ<sub>A→B</sub> ≠ CLQ<sub>B→A</sub>。</span></div>
+<figure class="fig"><img src="img/clq_explainer.png" alt="CLQ explainer" data-cap="左：某事故点的 6 个最近邻里 4 个是 POI（67%），全市 POI 占 62%，CLQ ≈ 1.1 协同；右：邻居里只有 2 个 POI（33%），CLQ ≈ 0.5 隔离。"><figcaption><b>图 4-1 CLQ 概念。</b>邻居里 B 的比例 ÷ 全市 B 的比例。</figcaption></figure>
+
+<h3>局部 LCLQ（每个 A 类点一个值）</h3>
+<div class="fm">LCLQ<sub>A<sub>i</sub>→B</sub> = N<sub>A<sub>i</sub>→B</sub> / ( N'<sub>B</sub> / (N − 1) )　　N<sub>A<sub>i</sub>→B</sub> = Σ<sub>j</sub> w<sub>ij</sub> f<sub>ij</sub> / Σ<sub>j</sub> w<sub>ij</sub><br>
+w<sub>ij</sub> = exp( −0.5 · d<sub>ij</sub>² / d<sub>ib</sub>² )　（高斯核；d<sub>ib</sub> 为点 i 的带宽距离）
+<span class="ex">j ∈ B 时 f<sub>ij</sub> = 1，否则为 0。近的邻居权重大。到带宽处权重接近零。</span></div>
+
+<h3>ArcGIS Pro 工具的机制</h3>
+<ol>
+<li><b>邻域定义</b>：K 最近邻（默认 8）、距离带，或空间权重矩阵。</li>
+<li><b>核函数</b>：高斯核的权重随距离衰减。箱型核等权。</li>
+<li><b>显著性</b>：用<b>局部置换检验</b>，默认 99 次。每次随机重排 B 类标签，重算 LCLQ。由此得到 p 值。</li>
+<li><b>输出字段</b>：<code>LCLQ</code>、<code>p-value</code>、<code>LCLQTYPE</code>。LCLQTYPE 有五类：Colocated–Significant、Colocated–Not Significant、Isolated–Significant、Isolated–Not Significant、<b>Undefined</b>。Undefined 表示邻域内没有 B 类点，LCLQ 算不出来。全局 CLQ 表也给每对类别的 p 值。</li>
+</ol>
+<p class="legend">术语：2023 年全文叫"区位熵"。答辩评审指出，这个概念是"商（quotient）"，不是"熵（entropy）"。重构后统一叫"协同区位商 CLQ"。</p>
+</div>
+
+<div class="widget" id="clqWidget">
+<h4>动手算一个 CLQ</h4>
+<p class="legend">拖动滑块。看 CLQ 怎么随"邻居里 B 的比例"和"全市 B 的比例"变化。</p>
+<div class="two">
+<div>
+<label>某 A 类点的邻居里，B 类占比 = <span id="clqLocal">67</span>%</label><input type="range" id="clqL" min="0" max="100" step="1" value="67">
+<label>全市 B 类占比（示例数字） = <span id="clqGlobal">62</span>%</label><input type="range" id="clqG" min="1" max="100" step="1" value="62">
+</div>
+<div class="out">LCLQ = <span id="clqLv">67%</span> ÷ <span id="clqGv">62%</span> = <b id="clqOut">1.08</b><br><span id="clqRead">&gt; 1：协同定位（B 在 A 附近比全市更常见）</span></div>
+</div>
+</div>
+
+<h3>本项目怎么做</h3>
+<p>2023 年我在 ArcGIS Pro 中跑了三套分析。(1) 事故类型之间的全局 CLQ（5 × 5）。(2) 10 类 POI（兴趣类别 A）× 5 类事故（邻近类别 B）的全局 CLQ（10 × 5）。(3) 30 组局部 LCLQ（3 类事故 × 10 类 POI），GDB 留存 25 组。2026 年我用 Python 重绘热图，再算净协同指数。我还读 GDB 的 <code>LCLQTYPE</code> 字段，重绘显著点地图。</p>
+
+<h3>结果</h3>
+<div class="card">
+<h4>① 事故类型之间：全部 3.5–8.6，远大于 1</h4>
+<p>任何一类事故的邻域内，其他事故的比例都是全局的 3–4 倍。事故类型之间没有空间分工，它们共同响应交通量和冲突点密度。<b>翻车自协同 8.63</b>最高，"其他"自协同 6.36 第二。这两类地点特异性强（弯道、坡道、路面），最适合工程"定点清除"。</p>
+<h4>② POI → 事故：几乎全部 &lt; 1（0.35–0.95）</h4>
+<p>餐饮 0.36–0.46、购物 0.35–0.46、生活服务 0.39–0.51……略 &gt; 1 的只有三对：政府机构 × 翻车 <b>1.24（p = 0.02，唯一显著）</b>、商务住宅 × 其他 1.21、科教 × 其他 1.04。</p>
+<div class="note warn"><span class="t">这是尺度效应，不能读成"POI 附近事故少"</span>POI 有 28,847 个，事故点只有 9,384 个，POI 还集中在少数商业街。所以 POI 的近邻多是其他 POI，POI → 事故方向系统性 &lt; 1。更合理的做法有两种：把每类 POI 抽样到与事故点同量级；或者反过来，以事故为兴趣类别。</div>
+<h4>③ 局部 LCLQ：80–90% 的点不显著</h4>
+<p>净协同 = 显著协同% − 显著隔离%。结果：政府机构 +2.2、商务住宅 +2.2、科教 +1.6、体育 +1.2、医疗 +0.7；住宿 0；生活服务 −0.9、公司 −1.6、餐饮 −1.6、<b>购物 −5.4</b>。</p>
+<h4>④ 解释的升级：从"管理重点"到"速度环境"</h4>
+<p>2023 年把购物 / 公司的隔离解释为"车流大、交警管理重点、驾驶人警惕"。把住宅 / 政府的协同解释为"生活化使驾驶人随意"。2026 年改成<b>速度环境</b>：购物街、餐饮街最拥堵，车速最低，低速抑制了需要报警的事故。政府机构、学校、商务住宅沿线道路更宽更快。这和另外三条证据互证："单位活动事故随密度下降""NB 残差集中于过境干道""火车站超额"。</p>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/gclq_heatmaps.png" alt="global CLQ" data-cap="(a) 事故类型间全局 CLQ；(b) POI 类型 × 事故类型全局 CLQ，对数发散色标以 1 为中点。"><figcaption><b>图 4-2 全局 CLQ 热图。</b>(a) 全部 &gt; 3.5，翻车自协同最高。(b) 几乎全部 &lt; 1，只有政府 × 翻车显著 &gt; 1。</figcaption></figure>
+<figure class="fig"><img src="img/lclq_shares.png" alt="LCLQ shares" data-cap="10 类 POI 的 LCLQ 四类占比堆叠条和显著协同/隔离占比。"><figcaption><b>图 4-3 LCLQ 类别占比。</b>购物的显著隔离最多。政府和商务住宅的显著协同最多。</figcaption></figure>
+</div>
+<figure class="fig"><img src="img/map_lclq.jpg" alt="LCLQ map" data-cap="6 组代表性 LCLQ 显著点地图：碰撞×购物/生活/医疗、追尾×公司/住宿、翻车×政府。括号为显著协同/显著隔离点数。"><figcaption><b>图 4-4 代表性 LCLQ 地图。</b>橙 = 显著协同，蓝 = 显著隔离。碰撞 × 购物：隔离点 129，协同点 38。翻车 × 政府机构：协同 20，隔离 3。</figcaption></figure>
+<details><summary>附录：全部 25 组 LCLQ 图层</summary><div class="body">
+<figure class="fig"><img src="img/lclq_all.jpg" alt="all LCLQ" data-cap="GDB 留存的全部 25 组事故 × POI 局部 CLQ 显著点小图。"><figcaption><b>图 4-5 25 组 LCLQ。</b>碰撞 5 组 + 追尾 10 组 + 翻车 10 组。碰撞 × 办公 / 居住的 5 组没有留存。"碰撞 × 餐饮"图层其实是追尾，已经剔除。</figcaption></figure>
+</div></details>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"A buffer count tells you how many shops are near crashes. It does not tell you if that is more than you expect, given how many shops exist. The colocation quotient divides the share of B among A's nearest neighbours by B's global share. So 1 means random. It is asymmetric. It has a local version with a Gaussian kernel. ArcGIS Pro tests significance by permuting labels. I also found a scale artefact. When B vastly outnumbers A, the B-to-A quotients are systematically below 1. So I interpret the direction, not the magnitude. Next time I would subsample POIs."</p></div>
+
+<div class="note warn"><span class="t">局限</span>
+<ul style="margin:0">
+<li>尺度效应（POI ≫ 事故点）。LCLQ 显著性没有做多重检验校正。K 近邻 / 带宽用 ArcGIS 默认值，报告里没有记录具体值。</li>
+<li>GDB 有一个贴错标签的图层（追尾当成碰撞 × 餐饮）。另有 5 组图层没有留存。</li>
+<li>2026 年重构时删除了与西昌无关的模板文字。</li>
+<li>2023 年曾误把属性表里的 Neighbor prevalence（邻域内 POI 占比）当成事故密度。</li>
+</ul></div>
+</section>
+
+<section class="panel" id="tab-ml" role="tabpanel">
+<h2>5 · 机器学习：LightGBM + SHAP，以及没做完的贝叶斯网络</h2>
+<p class="lead">路段层面的问题：2,847 条路段，13 个特征（用地、枢纽距离、道路属性），哪些驱动了事故数？传统泊松 / 负二项回归要求严格假设。但这些特征高度共线，还有阈值和交互。GBDT 自动处理非线性和交互，代价是不可解释。所以用 SHAP 把结果翻译回来。<span class="team">模型由队友训练</span><span class="mine">我参与 SHAP 解读</span></p>
+
+<div class="toc"><a href="#ml-gbdt">GBDT / LightGBM</a><a href="#ml-shap">SHAP</a><a href="#ml-read">怎么读图</a><a href="#ml-res">结果</a><a href="#ml-bn">贝叶斯网络</a></div>
+
+<h3 id="ml-gbdt">5.1 GBDT 与 LightGBM 原理</h3>
+<div class="card">
+<p><b>梯度提升决策树（GBDT）</b>：预测 = T 棵回归树之和，f(x) = Σ<sub>t</sub> h<sub>t</sub>(x)。每棵新树拟合当前损失函数的负梯度，也就是残差。树一棵一棵地"纠错"。</p>
+<p><b>LightGBM</b>（Ke et al., NIPS 2017，微软）比 XGBoost 更快、更省内存。它原生处理类别变量，对共线性稳健。它靠三项技术：</p>
+<ol>
+<li><b>GOSS</b>（gradient-based one-side sampling）：保留梯度绝对值最大的 top a × 100% 样本。从其余样本随机抽 b × (1 − a) × 100%，并放大权重 (1 − a)/b。梯度大 = 当前模型拟合得差 = 信息多。这些样本要重点保留。</li>
+<li><b>EFB</b>（exclusive feature bundling）：把互斥的稀疏特征捆成一个特征。互斥指不同时非零。这样可以降维。</li>
+<li><b>直方图算法 + leaf-wise 生长</b>：把连续特征分箱。按叶子最大增益生长，不逐层生长。</li>
+</ol>
+<p><b>为什么选它</b>：路段事故数是过度离散的计数。特征高度共线，例如车道数与等级、办公密度与灯光。特征还有阈值和交互。GBDT 自动处理非线性和交互，对共线稳健。代价是可解释性弱，所以配 SHAP。</p>
+</div>
+
+<h3 id="ml-shap">5.2 SHAP 原理</h3>
+<div class="card">
+<p><b>SHAP</b>（SHapley Additive exPlanations, Lundberg &amp; Lee 2017）把每个预测分解为可加的贡献：</p>
+<div class="fm">ŷ<sub>i</sub> = φ<sub>0</sub> + Σ<sub>j</sub> φ<sub>ij</sub>　　（φ<sub>0</sub> = 全体样本预测均值）<br>
+φ<sub>j</sub> = Σ<sub>S ⊆ F∖{j}</sub> [ |S|! (|F| − |S| − 1)! / |F|! ] · [ f<sub>S∪{j}</sub>(x) − f<sub>S</sub>(x) ]
+<span class="ex">φ<sub>j</sub> 是博弈论的 Shapley 值（Shapley 1953）。它是特征 j 在所有可能加入顺序下的平均边际贡献。它满足四条性质：效率性（各项之和等于预测与均值之差）、对称性、哑元、可加性。精确计算是 2<sup>|F|</sup> 指数级。TreeExplainer（Lundberg et al. 2020）对树模型能在多项式时间内精确计算。</span></div>
+<p>直觉：把 13 个特征想成 13 个队友。他们一起"凑出"这条路段的事故数。某个特征的 SHAP 值，就是它平均"贡献"了多少起事故，可正可负。这个平均对所有加入顺序取，所以公平。</p>
+</div>
+
+<h3 id="ml-read">5.3 怎么读 SHAP 图</h3>
+<div class="tbl-wrap"><table>
+<tr><th>图</th><th>横轴 / 纵轴 / 颜色</th><th>看什么</th></tr>
+<tr><td><b>Summary plot（蜂群图）</b></td><td>每行一个特征，按平均 |SHAP| 降序。每点一条路段。横轴是 SHAP 值，本项目的单位 = 事故起数的偏移。颜色 = 特征取值，红高蓝低。</td><td>红点在右 → 高取值增加事故。点云横向宽 → 影响大。颜色左右分层清晰 → 关系单调。</td></tr>
+<tr><td><b>Importance bar</b></td><td>平均绝对 SHAP，(1/n) Σ |φ<sub>ij</sub>|</td><td>特征重要性排序。它比 gain-based importance 更稳定。</td></tr>
+<tr><td><b>Dependence plot</b></td><td>横轴是特征值。纵轴是该特征的 SHAP 值。点色 = 第二个特征取值。</td><td>看非线性，如阈值、拐点。同一横坐标下颜色分层 → 交互效应。</td></tr>
+</table></div>
+<figure class="fig half"><img src="img/shap_summary.png" alt="SHAP summary" data-cap="SHAP 蜂群图：横轴为对模型输出（事故数）的影响，颜色为特征取值高低。"><figcaption><b>图 5-1 SHAP 蜂群图（2023 原图）。</b>办公立地排第一。红点（高办公密度）全在右侧，拖到 +50 起。火车站枢纽距离：红点（远）在左，蓝点（近）在右。越近事故越多。</figcaption></figure>
+
+<h3 id="ml-res">5.4 本项目的做法与结果</h3>
+<div class="card">
+<p><b>数据</b>：2,847 个路段。因变量 = 路段事故数（<b>计数，不是率</b>）。13 个特征分三组。用地：办公 / 商业 / 居住 POI 数、WorldPop 人口密度、夜间灯光。枢纽：到火车站 / 机场 / 长途车站的距离。道路：管理等级、车道数、形态、隔离状态、流向。</p>
+<p><b>平均 |SHAP| 分三档</b>。第一档 &gt; 4：<b>办公立地 7.3</b>、火车站距离 4.5、道路管理等级 4.4、车道数 4.2。第二档 2.5–3.5：商业、机场距离、居住、人口密度、长途站距离、夜间灯光。第三档 &lt; 1.6：道路形态、隔离状态、流向。</p>
+<p><b>方向</b>：用地全部正向。枢纽距离全部负向，越近事故越多。等级越高、车道越多，事故越多。<b>物理隔离路段的 SHAP 几乎全为负</b>。它是模型中唯一系统性降低事故的道路属性。</p>
+<h4>依赖图里的七个形态</h4>
+<ol>
+<li>办公 POI &lt; 50 时 SHAP ≈ 0。&gt; 50 后近似指数上升。最密路段 +40 到 +50 起。这是<b>阈值效应</b>。</li>
+<li>居住密度拐点约 100。它与道路等级交互：同密度下，高等级路事故更多。</li>
+<li>夜间灯光 &lt; 20 时 SHAP 全负。&gt; 50 时显著升高。</li>
+<li>商业用地非线性，但总体上升。商业与办公同时密集处，SHAP 明显高。</li>
+<li>枢纽效应是局部的。火车站 3 km、机场 5–7 km、长途站 1–2 km 内 SHAP 正且波动大。之外归零。近枢纽路段也是商业密集路段。枢纽通过周边活动起作用。</li>
+<li><b>车道数 ≤ 3 全负，≥ 4 全正，≥ 8 再跃升</b>。这是最干净的设计信号："宽路更危险"，指事故负担意义上。</li>
+<li>双向分离道路在经济活跃区 SHAP 最高。辅路也在活跃区，但贡献极低。这说明把过境与到发交通分离本身有效。</li>
+</ol>
+<p><b>经济学解读</b>：用地与枢纽主要通过<b>暴露量</b>起作用。等级与车道数同时作用于暴露量（车多）和<b>风险</b>（更高设计速度、更复杂换道）。这是风险补偿的反向版本："路越安全，开得越快"。物理隔离不依赖驾驶人自觉，是 Safe System 的核心。国际证据：城市干道做物理中央隔离，可减少 20–40% 伤人事故。办公阈值效应说明，用地审批应引入交通影响评价，把外部性内部化。</p>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/shap_importance.png" alt="SHAP importance" data-cap="平均 |SHAP| 特征重要性。"><figcaption><b>图 5-2 特征重要性。</b></figcaption></figure>
+<figure class="fig"><img src="img/shap_landuse.png" alt="SHAP land use dependence" data-cap="用地依赖图：灯光 × 人口、办公 × 灯光、商业 × 办公、居住 × 等级。"><figcaption><b>图 5-3 用地依赖图。</b>办公 POI 的阈值在 50 左右。</figcaption></figure>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/shap_hub.jpg" alt="SHAP hub dependence" data-cap="枢纽距离依赖图：火车站 / 机场 / 长途站距离 × 商业。"><figcaption><b>图 5-4 枢纽依赖图。</b>效应在几公里内就归零。</figcaption></figure>
+<figure class="fig"><img src="img/shap_road.png" alt="SHAP road dependence" data-cap="道路属性依赖图：车道数、道路形态 × 灯光。"><figcaption><b>图 5-5 道路属性依赖图。</b>车道数 ≤ 3 全负，≥ 4 全正。</figcaption></figure>
+</div>
+
+<div class="note warn"><span class="t">这一节最重要的局限</span>
+<ul style="margin:0">
+<li>模型解释的是<b>事故数</b>，不是<b>事故率</b>。我们没有路段交通量。任何抬高交通量的特征，都同时通过暴露量和风险两个渠道起作用。模型分不开这两个渠道。第二阶段的 SPF 给出旁证：同等级内，事故随车公里的弹性只有 0.00–0.45。这说明"高等级道路事故多"很大一部分是交通量。</li>
+<li>相关不是因果。SHAP 的<b>方向</b>比<b>大小</b>可靠。结果可能被未观测的交通量、路口密度、限速混淆。</li>
+<li>结题论文没有报告预测精度指标（无 RMSE / R²，无训练测试划分说明）。超参数没有保留。原始数据丢失，无法重训练。图直接引用 2023 年版本。</li>
+<li>如实分工：模型训练由队友完成。我参与特征解释。2026 年我独立重新解读。</li>
+</ul></div>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"The team trained a LightGBM model of segment crash counts. It used 13 land-use, hub-distance and road-design features. My part was the SHAP interpretation. Office density had a threshold around 50 POIs. Lane count flipped sign at four lanes. Physical medians were the only design attribute with consistently negative SHAP. The caveat I raise first: the target was a count, not a rate. So exposure and risk were confounded. Phase 2 fixed exactly that. It showed that much of the road-class effect was traffic volume."</p></div>
+
+<h3 id="ml-bn">5.5 贝叶斯网络（2023 原方法，未完成）</h3>
+<div class="card">
+<h4>原理</h4>
+<p><b>贝叶斯定理</b>：P(A|B) = P(B|A)·P(A) / P(B)。<b>贝叶斯网络</b>是有向无环图（DAG）。节点 = 随机变量，边 = 条件依赖，无边 = 条件独立。联合分布 P(X<sub>1</sub>…X<sub>n</sub>) = Π<sub>i</sub> P(X<sub>i</sub> | parents(X<sub>i</sub>))。结构可以由专家设定，也可以从数据学习。学习方法分两类：score-based（如 BIC / K2）、constraint-based（如 PC）。参数是条件概率表（CPT），用 EM 或极大似然从数据学习。优点：能处理不确定性和缺失，能做多场景推断。例如"下雨 + 夜间 + 路灯差时，严重事故概率多少"。</p>
+<p><b>互信息</b>用于特征选择：I(X;Y) = Σ p(x,y) log[p(x,y) / (p(x)p(y))] = H(Y) − H(Y|X)。它度量"知道 X 后，Y 的不确定性减少多少"。</p>
+<h4>本项目做到哪一步</h4>
+<p>工具是 GeNIe。2023 年先做了变量离散化和边际分布（N = 19,990）。严重程度：轻微 77% / 中等 20% / 严重 3%。可见度：好 41 / 中 34 / 差 25。路灯：好 59 / 中 26 / 差 14。日间 79 / 夜间 21。天气：晴 38 / 多云 13 / 小雨 41 / 中雨 6 / 大雨 2。路面：干 51 / 湿 49。网络结构按文献和经验设定：天气 → 路面、可见度；照明 + 路灯 → 可见度；参与者 → 碰撞类型；路面 + 可见度 + 碰撞类型 → 严重程度。<b>参数学习与验证没有完成</b>。</p>
+<p>能说的只有描述性结论。严重程度高度偏斜：3% ≈ 600 起"严重"，几乎全部集中在涉弱势者与大型车的组合。可见度"差"占 25%，而夜间只占 21%。这说明可见度差也来自降雨和雾。严重程度的方差主要来自"谁撞了谁"，不是天气或照明。</p>
+</div>
+<figure class="fig half"><img src="img/bayes_network.jpg" alt="Bayesian network" data-cap="GeNIe 中的贝叶斯网络结构与各节点边际分布。"><figcaption><b>图 5-6 贝叶斯网络结构（GeNIe，2023）。</b>目标节点 severity。只完成了结构和边际分布。</figcaption></figure>
+<div class="note warn"><span class="t">局限</span>重构报告不再把贝叶斯网络当作已完成的模型。只保留边际分布表和结构图。建议未来用贝叶斯网络或有序 logit 建模。接警数据对严重程度建模的支持有限：没有伤害分级，"严重"靠伤亡数和关键词推断。报警与否本身和严重程度相关，轻微事故漏报。这是选择偏差。</div>
+</section>
+
+<section class="panel" id="tab-econ" role="tabpanel">
+<h2>6 · 经济学框架：一个恒等式、三个概念、七项建议</h2>
+<p class="lead">2026 年重构时，我换掉了 2023 年的框架。旧框架是"特征分析 + 影响因素识别"。新框架是交通安全经济学的一个恒等式。恒等式本身没有新信息。它的价值是把<b>每一项政策工具对应到一个维度</b>。它还能解释一点：在事故已经集中的地方降低严重程度，回报最高。</p>
+
+<div class="card">
+<h3>恒等式</h3>
+<div class="fm">C = Σ<sub>i</sub> E<sub>i</sub> × (N<sub>i</sub> / E<sub>i</sub>) × (K<sub>i</sub> / N<sub>i</sub>) × (C<sub>i</sub> / K<sub>i</sub>)<br>
+　　　　暴露 exposure × 风险 risk × 严重程度 severity × 单位成本 unit cost
+<span class="ex">出处：Hakkert 2002；Elvik 2009。i 是任意分层，例如路段、时段、参与者组合。E 是暴露量，例如车公里、人公里、出行次数。N 是事故数。K 是伤亡数。C 是成本。</span></div>
+<div class="tbl-wrap"><table>
+<tr><th>维度</th><th>对应的政策工具</th><th>本项目的证据</th></tr>
+<tr><td>暴露量 E</td><td>土地利用、需求管理、过境分流、方式转移</td><td>第二阶段：车公里解释了"过境干道超额"的大部分。2035 政策情景小汽车份额 −5 pt，可避免一半事故增量。</td></tr>
+<tr><td>风险 N/E</td><td>道路设计、速度管理、接入管理、路口渠化</td><td>SHAP：物理隔离是唯一负向变量。EB 超额事故集中在武大线、合盐路二段。VISSIM：保护左转使交叉冲突 −79%。</td></tr>
+<tr><td>严重程度 K/N</td><td>弱势者保护、限速 30 km/h、大型车管理</td><td>弱势者占 26% 事故，却占 79% 伤亡。大型车 × 行人：2.04 人/起。</td></tr>
+<tr><td>单位成本 C/K</td><td>急救、医疗、保险</td><td>本项目未涉及</td></tr>
+</table></div>
+<p>一项干预的边际收益 = 它改变的那一项 × 其余三项。热点带的暴露量和风险都已经很高。在那里降低严重程度，乘出来的收益最大。</p>
+</div>
+
+<h3>三个经济学概念</h3>
+<div class="grid g3">
+<div class="tile"><div class="v" style="font-size:18px">事故外部性</div><div class="d">驾驶人选车速和注意力时，只权衡自己的时间和风险。他不计入自己给行人、骑车人带来的风险（Vickrey 1968；Lindberg 2001）。Edlin &amp; Karaca-Mandic (2006) 估计：在高密度州，每多一名驾驶人给他人造成 &gt; $2,000/年的外部成本。含义：市场供给的安全不够。所以需要价格、规制或环境（Safe System）来补。</div></div>
+<div class="tile"><div class="v" style="font-size:18px">风险补偿</div><div class="d">Peltzman (1975)：驾驶人有了安全带等保护后，开得更冒险，部分抵消了保护效果。Wilde (1982) 的"风险稳态"是极端版。极端版已被证伪，部分补偿反复得到支持。本项目用它解释两件事：小雨 / 中雨日事故率反而低于晴天，大雨时补偿不够；更宽、等级更高的路诱发更快车速。</div></div>
+<div class="tile"><div class="v" style="font-size:18px">集聚与边际收益递减</div><div class="d">事故是出行的副产品。出行高度集聚在就业 / 商业 / 枢纽，所以事故分布必然偏斜。好处：集中投入少数地点就能覆盖大部分风险（10% 网格 → 48% 事故）。陷阱：高事故数往往只是高暴露量，不是高风险（Hauer 1997；HSM 2010）。</div></div>
+</div>
+
+<h3>严重程度与速度</h3>
+<div class="card">
+<p>碰撞动能 ∝ v²。行人被 30 km/h 的车撞，死亡率约 10%。被 50 km/h 的车撞，死亡率 &gt; 80%（Elvik 2013；ITF 2016）。<b>Nilsson 速度幂律</b>：伤人事故数 ∝ v<sup>2</sup>，死亡事故 ∝ v<sup>4</sup>。车速降 10% → 伤人事故约 −19%。在弱势者密集区限速 30 km/h，同时改变"是否发生"和"多严重"。只有这一项措施能同时做到两点。</p>
+</div>
+
+<h3>社会成本情景估算</h3>
+<div class="card">
+<p><b>原理</b>：事故成本 = 人身伤害成本 + 财产损失与行政成本 + 拥堵等间接成本（Elvik 2009；Viscusi &amp; Aldy 2003）。人身伤害成本包括 VSL、医疗、误工、痛苦。VSL 是统计生命价值（value of a statistical life），来自支付意愿研究。中国没有官方 VSL 标准。文献里的取值从数十万元到数百万元。</p>
+<div class="tbl-wrap"><table>
+<tr><th>严重程度</th><th>事故数</th><th>单位成本低（万元/起）</th><th>高</th><th>合计低（亿元）</th><th>高</th></tr>
+<tr><td>轻微 77%</td><td>15,390</td><td>0.5</td><td>1.5</td><td>0.77</td><td>2.31</td></tr>
+<tr><td>中等 20%</td><td>4,000</td><td>5</td><td>15</td><td>2.00</td><td>6.00</td></tr>
+<tr><td>严重 3%</td><td>600</td><td>50</td><td>150</td><td>3.00</td><td>9.00</td></tr>
+<tr><td><b>合计</b></td><td>19,990</td><td></td><td></td><td><b>5.8</b></td><td><b>17.3</b></td></tr>
+<tr><td>占 2019 GDP（约 560 亿元）</td><td></td><td></td><td></td><td>1.0%</td><td>3.1%</td></tr>
+</table></div>
+<p>结果：6–17 亿元，≈ GDP 的 1–3%。这与 WHO"约 3%"的基准一致。严重事故只占 3%，却贡献一半以上成本。涉弱势者事故占四分之一，却贡献约四分之三的成本。</p>
+<p class="legend">局限：单位成本是情景假设，不是西昌实测。GDP 560 亿是约数。结果只给量级和结构，不能当精确数字引用。</p>
+</div>
+
+<h3>内部化路径与七项建议</h3>
+<div class="card">
+<p>内部化有三类工具。<b>价格</b>：与暴露量 / 风险挂钩的保费、按里程计费、货车进城费。价格理论上最优，但在地方层面最难做。<b>规制</b>：限速、货车限行、路权。规制依赖执法。<b>环境</b>：窄化车道、物理隔离、抬高过街、路口紧缩。环境一次投入，长期有效，是 Safe System 的核心。第四类作用于未来的外部性：用地审批中的交通影响评价。七项建议的排序指标 = 预期减少的事故成本 / 实施成本。效应量取自国际手册。</p>
+<ol>
+<li><b>核心区高密度网格（前 10%，约 5 km²）设 30 km/h 区</b>，加抬高过街、路口紧缩、安全岛。依据：弱势者占 79% 伤亡；Gi* 热点带 13% 网格含 65% 事故。效应：速度 −10% → 伤人事故 −19%。</li>
+<li><b>大型车管理与站前交通组织</b>：核心区货车限行时段和路线、右转盲区处置、火车站站前人车分离。依据：大型车 × 行人 2.04 伤亡/起；火车站 0.5 km 内单位活动事故是全市的两倍。</li>
+<li><b>过境干道做物理中央隔离、接入管理、限速；老城次干路做路口渠化</b>。依据：物理隔离是模型里唯一系统性降低事故的属性。<b>第二阶段修正后：先投武大线、合盐路二段、长安路系，不投航天大道全线</b>。效应：伤人事故 −20–40%。</li>
+<li><b>用地审批加入交通安全评估和开发条件</b>。依据：办公密度有阈值效应；枢纽 1–3 km 内事故集中。</li>
+<li><b>治理大雨条件下的物理风险</b>：排水、抗滑路面、积水点标识、暴雨预警期干道管控。依据：大雨 RR 1.15（1.03–1.29）。</li>
+<li><b>翻车走廊（G5 经久段、G348 合盐段）做弯道坡道工程</b>：限速、路侧护栏、标线。依据：翻车自协同 CLQ 8.63；翻车在城外独立聚集。</li>
+<li><b>建立暴露量，也就是分母</b>：交通量、伤害分级、坐标化接警。用 EB 做路网筛选。第二阶段已用示意级模型部分实现。</li>
+</ol>
+<p><b>不建议</b>三件事：雨天的一般性宣传教育；面向行人 / 骑车人的"安全意识"活动；在低密度外围新建宽阔干道。最后一项会复制"宽路更危险"的模式。</p>
+</div>
+<figure class="fig half"><img src="img/recs_matrix.png" alt="recommendations matrix" data-cap="七项建议 × 作用维度 × 成本矩阵。"><figcaption><b>图 6-1 建议矩阵。</b>每项建议落在恒等式的哪一维，成本是高还是低。</figcaption></figure>
+
+<details><summary>统计模型速查</summary><div class="body">
+<ul>
+<li>泊松回归：ln μ = Xβ，Var = μ。事故数据常过度离散。</li>
+<li>负二项回归（NB2）：Var = μ + αμ²。HSM 记法是 μ + kμ²，k 是过度离散参数。α → 0 时退化为泊松。</li>
+<li>皮尔逊残差 z = (y − μ̂) / √Var̂。|z| &gt; 2 近似 95% 异常。</li>
+<li>率比 RR 和它的 CI：se(ln RR) = √(1/a + 1/b)。</li>
+<li>Garwood 精确泊松区间：[χ²<sub>0.025</sub>(2k)/2n, χ²<sub>0.975</sub>(2k+2)/2n]。</li>
+<li>对数弹性：ln μ = β<sub>0</sub> + β<sub>1</sub> ln x → β<sub>1</sub> = 弹性。</li>
+<li>GEH = √(2(M − C)² / (M + C))。GEH &lt; 5 视为匹配良好。</li>
+</ul></div></details>
+
+<details><summary>2023 年答辩评审三条意见及回应</summary><div class="body">
+<ol>
+<li>"地图应改为路网图" → 我把全部地图基于 OSM 重绘，叠加铁路、水系、枢纽。</li>
+<li>"概念是区位商不是区位熵" → 全文统一用 CLQ，附录给定义。</li>
+<li>"只分析用地类型和聚集点过于宽泛，应细化到道路特征" → 我把道路等级 / 车道 / 形态 / 隔离分析并入主线。POI 关联重新解释为速度环境差异。建议落到具体道路和工程措施。第二阶段进一步落到路段级 EB 排名和具体路口。</li>
+</ol></div></details>
+</section>
+
+<section class="panel" id="tab-why2" role="tabpanel">
+<h2>7 · 为什么要做第二阶段：缺的是"分母"</h2>
+<p class="lead">第一阶段把 2 万起事故画在地图上。它回答了"事故<b>在哪里</b>"，但回答不了"<b>为什么</b>在那里"。原因是没有交通量。没有交通量，"事故多"和"车多"在数据上长得一模一样。第二阶段只有一个目的：补上暴露量（exposure），也就是分母。</p>
+
+<div class="card">
+<h3>核心恒等式</h3>
+<div class="fm">事故成本 = 暴露 E × 风险 (N / E) × 严重程度 (K / N) × 单位成本 (C / K)
+<span class="ex">E = 车公里 VKT（美国叫 VMT）或 AADT。N = 事故数。K = 伤亡数。C = 经济损失。第一阶段只有 N、K、C。E 一直是空的。</span></div>
+<p>没有 E，就分不开下面两种问题。两种问题的对策完全不同：</p>
+<div class="grid g2">
+  <div class="tile"><div class="v" style="font-size:19px">事故多，因为车多</div><div class="d">暴露量高，风险正常。对策是<b>需求管理</b>：分流过境车流、减少小汽车出行、保护弱势出行者过街。</div></div>
+  <div class="tile"><div class="v" style="font-size:19px">事故多，因为路危险</div><div class="d">风险高。对策是<b>工程措施</b>：中央隔离、接入管理、路口渠化、道路安全审计（RSA）。</div></div>
+</div>
+<p>美国的做法写在 HSM《Highway Safety Manual》第 4 章（network screening）。它要求先以 AADT 为暴露量建立 SPF。SPF 是安全性能函数，根据交通量预测一条路应该有多少事故。然后用经验贝叶斯（EB）做筛选。第一阶段报告的第 7 条建议就是"建立暴露量分母、用 EB 做路网筛选"。但当时做不到。</p>
+</div>
+
+<h3>第一阶段哪些结论因此"站不稳"</h3>
+<div class="tbl-wrap"><table>
+<tr><th>第一阶段结论</th><th>缺少 E 带来的问题</th></tr>
+<tr><td>KDE / Gi* 热点、按事故数排名的前 15 条道路</td><td>排的是"事故多"，不是"危险"。大流量干道天然排前面。</td></tr>
+<tr><td>§6.4 负二项残差：过境干道（武大线 G348、航天大道、一环路、丹桂桥）事故"超出活动量预期"</td><td>模型只用 POI 代表活动量，<b>看不到过境车流</b>。所谓"超额事故"可能只是没观测到的交通量。</td></tr>
+<tr><td>SHAP：道路等级、车道数对事故数有正效应</td><td>暴露量渠道（宽路车多）和风险渠道（宽路车快）混在一起。模型分不开它们。</td></tr>
+</table></div>
+
+<h3>第二阶段做了什么</h3>
+<div class="steps">
+  <div class="step"><b>建一个示意级（sketch-level）四阶段模型</b>模型有 52 个内部小区 + 14 个外部小区，876 km 的 OSM 路网。全部参数来自规范和文献。现状年模型是出行格局、路网负荷和 2035 情景的基础。</div>
+  <div class="step"><b>回推到 2019 年（back-cast）</b>同一个模型换上 2019 年的路网和 2019 年人口。路网删掉了之后才通车的 134 km。这样就给第一阶段的事故数据提供了暴露量。</div>
+  <div class="step"><b>用车公里做 HSM 式 SPF / EB 路网筛选</b>检验"过境干道更危险"是否还成立。按事故数、事故率、EB 超额事故三种口径重排道路。</div>
+  <div class="step"><b>往前推：2035 情景</b>人口分 60 / 70 / 85 万三档，再加一个政策情景。量化增长的影响，以及"方式转移 5 个百分点"能抵消多少。</div>
+  <div class="step"><b>往下钻：VISSIM 微观仿真</b>选一个路口：航天大道 × 胜利南路。它事故最多，暴露量也解释不掉。比较许可左转和保护左转两套信号方案，用 SSAM 数冲突。</div>
+</div>
+
+<div class="note"><span class="t">三个容易混的"路段数"</span>2,847 = 2023 年在 ArcGIS 里按交叉口切分的路段单元，LightGBM 用。1,500 / 1,245 = 第二阶段现状 / 2019 模型路网的路段数（876 / 723 km）。6,168 = 2026 年下载的 OSM 路段数，制图和吸附用。另外，研究范围人口约 46–47 万：2020 年 46.0 万，现状年放大到约 47 万。全市 95.5 万。</div>
+<h3>四个研究问题（报告原文口径）</h3>
+<ul>
+<li><b>Q1 出行格局</b>：西昌人每天怎么出行、多远、用什么方式？</li>
+<li><b>Q2 路网负荷与稳健性</b>：哪些路段早高峰过载？结论对参数敏感吗？</li>
+<li><b>Q3 安全暴露</b>：控制交通量后，过境干道的超额事故是否还在？按事故率和 EB 排序怎么变？（核心产出）</li>
+<li><b>Q4 2035</b>：人口增长和开发边界约束下，车公里和事故怎么变？</li>
+</ul>
+
+<div class="note org"><span class="t">Q3 的答案（一句话）</span>控制交通量后，"过境干道更危险"不再成立。风险比 IRR 从 2.68 降到 1.22（p = 0.28，不显著）。航天大道事故数第一，按 EB 超额事故掉到第 48。真正超额的是武大线（G348）和合盐路二段。细节见第 11 节。</div>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"Phase 1 mapped 20,000 crashes. It had no exposure denominator. So I could not separate 'many crashes' from 'many vehicles'. I built a four-step model to supply that denominator. I back-cast it to 2019. Then I re-ran the safety screening with vehicle-kilometres as exposure. The ranking flipped."</p></div>
+
+<div class="note warn"><span class="t">局限</span>
+<p>西昌没有居民出行调查，也没有路段流量计数。所以模型<b>没有用流量计数校准</b>。按 FHWA《Travel Model Validation and Reasonableness Checking Manual》的术语，我做的是 reasonableness check 和 sensitivity test，不是 validation。暴露量只覆盖机动车。电动自行车占出行的三分之一，但没有分配到路网。而弱势出行者的伤亡最重。</p></div>
+
+<div class="timeline">
+  <div class="ev p1"><div class="when">2023</div>PRP 第一阶段：19,990 起事故，ArcGIS 空间分析 + LightGBM/SHAP + 贝叶斯网络，答辩。</div>
+  <div class="ev p1"><div class="when">2026-09</div>我把第一阶段重构为中英双版咨询风格报告（约 38 页）。补了 GIS 深度：OSM snapping、Gi*、NB 残差、25 个 LCLQ 图层。10 月初加入第 8 节暴露量调整，报告变为 47 / 44 页。</div>
+  <div class="ev"><div class="when">2026-10 上旬</div>第二阶段：数据准备、TAZ 划分、路网编码、四阶段模型、47 组敏感性、TransCAD 复现。</div>
+  <div class="ev"><div class="when">2026-10-06</div>暴露量调整（SPF/EB）、2035 情景、VISSIM/SSAM 热点路口。产出：需求模型报告 v1.0（44 / 42 页）、合并版（90 / 86 页）、作品集 v2（12 页）。</div>
+  <div class="ev"><div class="when">进行中</div>高德路线探测速度验证（40 条路线，14 天）。完成后以补遗发布。</div>
+</div>
+</section>
+
+<section class="panel" id="tab-fourstep" role="tabpanel">
+<h2>8 · 四步建模法（Four-step travel demand model）</h2>
+<p class="lead">四步法是美国 MPO / DOT 做区域交通规划的标准框架。它已经用了六十年。四步依次是：每个小区<b>产生和吸引多少出行</b>（出行生成）、这些出行<b>从哪到哪</b>（出行分布）、<b>用什么方式</b>（方式划分）、<b>走哪条路</b>（交通分配）。交通分配算出的拥堵时间再反馈回出行分布，循环到结果稳定。</p>
+
+<div class="toc">
+<a href="#fs-data">数据与小区</a><a href="#fs-gen">① 出行生成</a><a href="#fs-dist">② 出行分布</a><a href="#fs-mode">③ 方式划分</a><a href="#fs-assign">④ 交通分配</a><a href="#fs-results">结果</a>
+</div>
+
+<div class="pipe">
+  <span class="box p2" data-go="fs-data">人口网格 + POI + OSM 路网</span><span class="arr">→</span>
+  <span class="box p2" data-go="fs-gen">① 生成 P<sub>i</sub>, A<sub>j</sub></span><span class="arr">→</span>
+  <span class="box p2" data-go="fs-dist">② 重力分布 T<sub>ij</sub></span><span class="arr">→</span>
+  <span class="box p2" data-go="fs-mode">③ 方式划分</span><span class="arr">→</span>
+  <span class="box p2" data-go="fs-assign">④ UE 分配</span><span class="arr">⟲</span>
+  <span class="box p2" data-go="fs-assign">拥堵时间反馈 ×3</span><span class="arr">→</span>
+  <span class="box p2" data-go="fs-results">路段流量 / V/C / VKT</span>
+</div>
+<p class="legend">点击方块跳到对应小节。出行目的分三类：HBW（家—工作，含返程）、HBO（家—其他，含上学）、NHB（非家）。出行生成到方式划分用 Python / numpy 自己写。阻抗矩阵和交通分配用 AequilibraE。</p>
+
+<h3 id="fs-data">数据与小区系统</h3>
+<div class="two">
+<div>
+<h4>人口：ESSD 100 m 网格</h4>
+<p>普查只有乡镇街道级，共 25 个单元、95.5 万人。这比交通小区粗得多。Chen et al. (2024, ESSD) 用集成学习把七普人口下推到 100 m 网格。下推时以乡镇普查数为约束。格点落在哪个小区，我就把人口汇总到哪个小区。全市网格合计与普查只差 0.19%。现状年按 2025 年约 97.5 万放大。2019 年取 2020 年的 99%。</p>
+<h4>TAZ 划分（52 内部 + 14 外部）</h4>
+<p>小区过粗，区内出行全丢，也分配不到路网。小区过细，参数撑不住，形心连杆的人为效应放大。划分规则：以干路、铁路、河流切成面；不跨越高速 / 铁路 / 水面；各面人口量级相近。人口过大的单元再切一次，用居住区道路或人口加权 k-means。最小的单元贪心并入"最便宜"的邻居。结果是 52 个内部小区，人口中位数 7,900。14 个外部小区是 11 个道路出入口 + 青山机场 + 西昌站 + 西昌西站。西昌西站 2022 年底开通，只在现状年激活。研究范围外、模型范围内还有约 31 万外围人口。我把他们按最近出入口归集，在出入口生成进城出行。</p>
+</div>
+<figure class="fig"><img src="img/taz_map.jpg" alt="TAZ map" data-cap="交通小区系统：A 模型范围、研究范围与外部小区；B 52 个内部小区按人口密度着色；C 老城放大。"><figcaption><b>图 8-1 交通小区系统。</b>A 模型范围与 14 个外部小区（101–114）。B 52 个内部小区按人口密度着色。C 老城放大。形心连杆（橙线）接到次级道路，不接高速。</figcaption></figure>
+</div>
+
+<h4>路网：OSM 功能等级 → 通行能力与速度</h4>
+<p>供给侧需要每条路段的长度、方向、车道数、通行能力（pcu/h）、自由流速度和路阻函数参数。OSM 只有 21% 路段标了车道，0 条标了限速。所以我按 <code>highway</code> 等级查设计规范，赋默认值：</p>
+<div class="tbl-wrap"><table>
+<tr><th>OSM 等级</th><th>单向车道</th><th>通行能力 pcu/h/车道（低–基准–高）</th><th>自由流 km/h</th><th>依据</th></tr>
+<tr><td>motorway 高速</td><td>2</td><td>1,600 – 1,800 – 2,100</td><td>90</td><td>JTG B01-2014</td></tr>
+<tr><td>trunk 国道 / 快速路</td><td>2</td><td>850 – 1,400 – 1,800</td><td>50</td><td>CJJ 37-2012 表 4.3.2</td></tr>
+<tr><td>primary 主干路</td><td>2</td><td>800 – 1,350 – 1,700</td><td>40</td><td>CJJ 37</td></tr>
+<tr><td>secondary 次干路</td><td>2</td><td>780 – 1,300 – 1,650</td><td>32</td><td>CJJ 37</td></tr>
+<tr><td>tertiary 支路</td><td>1</td><td>700 – 1,100 – 1,600</td><td>25</td><td>CJJ 37</td></tr>
+<tr><td>*_link 匝道</td><td>1</td><td>父等级 × 0.8</td><td>父等级 × 0.6</td><td>CJJ 37 3.2.3</td></tr>
+</table></div>
+<p>低值约等于设计通行能力 × 0.6。这反映信号交叉口的绿信比折减。自由流速度约等于设计速度 × 0.8。现状路网 1,500 条路段、876 km（双幅路算两条单向）。</p>
+<div class="note warn"><span class="t">要点</span>通行能力取的是路段（mid-block）值，不含信号折减。所以 V/C 的绝对值低估拥堵。我只用 V/C 做相对比较。</div>
+
+<details><summary>2019 年路网怎么"回推"（back-cast）</summary><div class="body">
+<p>我用 Overpass attic 查询 <code>date:2019-12-31</code> 取历史 OSM。难点是 2019 年西昌的 OSM 很不完整。现状干线有 38% 当时还没画。所以"2019 OSM 里没有"<b>不能</b>作为删除依据。做法分四步。第一，对每条现状路段算它在 2019 主路缓冲区内的覆盖比例。覆盖低的是候选。第二，拉取 way 历史。第三，候选按项目分组，逐项找<b>正面证据</b>（通车新闻、政府公告、"十四五"规划、OSM construction 标签）。据此判定 built_after_2019 或 existed_mapped_later。第四，证据与置信度记在 CSV 里。结果删除 9 个项目 134 km。例如北环线 2020-11 通车、菜子山大道西延 2021、宁远大道西延 2022、西昌西站片区路网。另加 20 km 因此断头的路段。2019 路网 1,245 条、723 km。路段 ID 不变，便于跨年比较。</p>
+<p class="legend">口径说明：路网差异按"删除 9 个项目约 134 km"计，比按路段条数计准确。因为 1,500 − 1,245 = 255 条差异含断头段。</p>
+</div></details>
+
+<h3 id="fs-gen">① 出行生成（Trip generation）</h3>
+<div class="card">
+<h4>原理</h4>
+<p>出行生成估计每个小区的<b>产生量</b> P<sub>i</sub>（production，家端）和<b>吸引量</b> A<sub>j</sub>（attraction，非家端）。产生量常用出行率法：人口 × 人均日出行次数 × 目的比例。也可以用交叉分类法。吸引量用就业 / 建筑面积 × 吸引率。每个目的的 ΣP 必须等于 ΣA。所以要把吸引量<b>配平</b>（balance）到产生量总量。家端数据更可靠。NHB 两端都不在家，P = A，按非居住活动分配。</p>
+<h4>本项目</h4>
+<div class="fm">P<sub>ip</sub> = Pop<sub>i</sub> × r × s<sub>p</sub>　　(HBW, HBO)<br>
+r = 2.5 次/人·日（低 2.1 / 高 2.8）　s<sub>HBW</sub> = 0.40　s<sub>HBO</sub> = 0.50　s<sub>NHB</sub> = 0.10<br>
+A<sub>jp</sub><sup>raw</sup> = Σ<sub>c</sub> POI<sub>jc</sub> · w<sub>pc</sub>　→　A<sub>jp</sub> = A<sub>jp</sub><sup>raw</sup> / ΣA<sub>p</sub><sup>raw</sup> × ΣP<sub>p</sub>
+<span class="ex">出行率出自 GB/T 51328-2018 条文说明。桂林 2017 调查 2.13、宜兴 2002 调查 2.75 作为低高值。国内调查把"回家"单列。这里回程归回去程目的。所以 HBW ≈ 2 × 上班比例。NHB 取 10%。美国 NCHRP 716 约 30%，不适用于中国小城市。</span></div>
+<p>吸引量权重 w<sub>pc</sub> 分两套。HBO / NHB 用 CJJ/T 141-2010 的高峰小时人次 / 100 m² 建筑面积中值（零售 15、餐饮 10、学校 12、医院 7.5、办公 3、居住 1.6）。HBW 用就业代理权重（办公 1.0、医疗 / 教育 1.5、零售 / 餐饮 / 服务 0.3、居住 0）。</p>
+<p>外部出行分三部分。一是外围人口进城：外围人口 × r × 进城比例 0.25。二是公路出入口车流：G5 主线穿越 + 城区过境 + 进出城，用 IPF 配平。三是机场和铁路站的地面接驳。</p>
+<p><b>结果</b>：117.4 万人次/日（HBW 47.0 万 / HBO 58.7 万 / NHB 11.7 万）。外围人口每天 38,700 车次进城。对外与枢纽 57,800 车次。</p>
+<p class="legend">局限：POI 权重按建筑面积制定，却用于个数。这隐含各类 POI 平均规模相近。结果是大型单位低估，小商铺密集区高估。出行目的结构借用宜兴 / 桂林。</p>
+</div>
+<figure class="fig half"><img src="img/res_pa_map.png" alt="PA map" data-cap="各小区全日产生量与吸引量密度：产生随人口、吸引随 POI。"><figcaption><b>图 8-2 产生 / 吸引密度。</b>产生跟着人口走。吸引跟着 POI 走。老城既是最大产生区，也是最大吸引区。</figcaption></figure>
+
+<h3 id="fs-dist">② 出行分布（Trip distribution）：双约束重力模型</h3>
+<div class="card">
+<h4>原理</h4>
+<p>出行分布把 P<sub>i</sub>、A<sub>j</sub> 变成 OD 矩阵 T<sub>ij</sub>。重力模型类比牛顿引力。出行量与两端规模成正比，随阻抗 c<sub>ij</sub> 递减。<b>双约束</b>（doubly constrained）要求行和 = P<sub>i</sub>、列和 = A<sub>j</sub>：</p>
+<div class="fm">T<sub>ij</sub> = a<sub>i</sub> · b<sub>j</sub> · P<sub>i</sub> · A<sub>j</sub> · f(c<sub>ij</sub>)<br>
+a<sub>i</sub> = 1 / Σ<sub>j</sub> b<sub>j</sub> A<sub>j</sub> f(c<sub>ij</sub>)　　b<sub>j</sub> = 1 / Σ<sub>i</sub> a<sub>i</sub> P<sub>i</sub> f(c<sub>ij</sub>)
+<span class="ex">a 和 b 互相依赖。所以用 Furness / IPF（iterative proportional fitting）迭代。先设 b = 1 求 a。再用 a 求 b。反复直到列和与 A 的偏差 &lt; 1e-7。</span></div>
+<p>阻抗函数（friction / deterrence function）常见三种：负指数 f = e<sup>−βc</sup>、幂函数 f = c<sup>−γ</sup>、Gamma f = a·c<sup>b</sup>·e<sup>c₀c</sup>（NCHRP 716）。标定目标通常是出行长度分布 TLFD，或平均出行长度。没有调查时，只能按平均值标定。</p>
+<h4>本项目</h4>
+<ul>
+<li>阻抗 c<sub>ij</sub> = 小区间小汽车<b>拥堵时间</b>（分钟）。所有方式共用这一个阻抗，这是示意级简化。区内阻抗 = 0.5 × 到最近邻小区的时间。阻抗矩阵（skim）由 AequilibraE 最短路求得。路径禁止穿过形心。</li>
+<li>f = e<sup>−βt</sup>。没有 TLFD 观测。所以我用二分法解 β，使平均出行<b>距离</b>等于目标。目标：HBW 4.5 km、HBO 3 km、NHB 3 km。HBW 的依据是 GB/T 51328：50–100 万人口城市平均通勤距离 ≤ 5 km。注意阻抗是时间，目标是距离。因为规范和调查给的是距离。</li>
+<li>标定结果 β<sub>HBW</sub> = 0.0375 /min，β<sub>HBO</sub> = 0.230，β<sub>NHB</sub> = 0.220。非工作出行对时间敏感约 6 倍，所以更短。</li>
+</ul>
+<p><b>结果</b>：54% 的出行短于 3 km，9% 超过 8 km。区内出行占 7.5%。HBW 平均小汽车时间 8.4 分钟。</p>
+<p class="legend">局限：分布的"形状"由负指数函数决定，只有均值受约束。慢行方式用小汽车时间作阻抗，低估了它们的成本。</p>
+</div>
+<figure class="fig half"><img src="img/res_tlfd.png" alt="TLFD" data-cap="按目的的出行距离分布；虚线为标定目标均值。"><figcaption><b>图 8-3 出行距离分布（TLFD）。</b>HBW 均值 4.5 km，HBO / NHB 3.0 km。这正好等于标定目标。这是"构造使然"，不是验证。</figcaption></figure>
+
+<h3 id="fs-mode">③ 方式划分（Mode split）</h3>
+<div class="card">
+<h4>原理</h4>
+<p>标准做法是离散选择模型（多项 logit 或巢式 logit）：P<sub>m</sub> = e<sup>V<sub>m</sub></sup> / Σ e<sup>V<sub>k</sub></sup>。效用 V<sub>m</sub> 由时间、费用、方式常数构成。估计系数需要出行调查。没有调查就退而求其次：用固定分担率，或按距离分段的份额。</p>
+<h4>为什么不用 logit</h4>
+<p>西昌没有居民出行调查。任何效用系数都估不出来。借用其他城市的系数，常数项也无法校准。所以我用"固定总份额 + 按距离分配"：</p>
+<div class="fm">share<sub>m</sub>(d) = c<sub>m</sub> · s<sub>m</sub> · e<sup>k<sub>m</sub> d</sup> / Σ<sub>k</sub> c<sub>k</sub> s<sub>k</sub> e<sup>k<sub>k</sub> d</sup>
+<span class="ex">s<sub>m</sub> 是全市目标份额（步行 28 / 自行车 4 / 电动车 33 / 摩托 3 / 公交 10 / 小汽车 18 / 出租 4 %）。k<sub>m</sub> 是相对电动车的每公里效用斜率（步行 −1.0、小汽车 +0.15、公交 +0.08……）。常数 c<sub>m</sub> 用不动点迭代拟合。拟合后全市总份额精确等于 s<sub>m</sub>。</span></div>
+<p>所以总份额是<b>情景输入</b>。模型只决定它<b>在哪里发生</b>。车次 = 小汽车人次 / 1.4 载客率 + 出租人次 / 1.4 × 1.3 空驶系数。电动车 OD 单独输出，不分配到机动车路网。公交也不分配。</p>
+<p><b>结果</b>：1 km 内 73% 步行。2–6 km 电动车占 40%。小汽车份额 2 km 内 7%，8 km 以上 42%。电动车 1/3 与桂林 2017 调查的 33.2% 一致。慢行 65% 满足 GB/T 51328"中等城市 ≥ 60%"。</p>
+<p class="legend">局限：分担率是全模型最不确定的参数（小汽车 11%–26%）。西南只有桂林一个参照。所以我用情景代替估计。</p>
+</div>
+<figure class="fig half"><img src="img/res_mode.png" alt="mode split" data-cap="A 全市分担率现状 vs 2019（情景输入）；B 各距离段的方式构成（模型输出）。"><figcaption><b>图 8-4 方式划分。</b>A 全市份额是输入。B 各距离段的构成是模型输出。步行随距离衰减，小汽车随距离上升。</figcaption></figure>
+
+<h3 id="fs-assign">④ 时段划分与交通分配（Traffic assignment）</h3>
+<div class="card">
+<h4>时段（Time of day）</h4>
+<p>我只分配早高峰小时。全日 PA 矩阵按出家 / 回家高峰比例合成早高峰 OD（HBW 出家 0.30、HBO 出家 0.12……）。再统一缩放，使人次加权早高峰比例 = 0.15。参照：宜兴 7–8 时 20.1%，美国 7.9%。全日流量 = 早高峰 / K。K 是全网早高峰车公里与全日车公里之比。这假定所有路段的日变化形态相同。</p>
+<h4>用户均衡（User Equilibrium, UE）原理</h4>
+<p><b>Wardrop 第一原理</b>：均衡时，同一 OD 对所有被使用路径的时间相等。这个时间不大于任何未使用路径。没有人能单方面换路，降低自己的时间。Beckmann 证明它等价于一个凸优化问题：</p>
+<div class="fm">min Z(x) = Σ<sub>a</sub> ∫<sub>0</sub><sup>x<sub>a</sub></sup> t<sub>a</sub>(w) dw　　s.t. Σ<sub>k</sub> f<sub>k</sub><sup>rs</sup> = q<sub>rs</sub>, f ≥ 0, x<sub>a</sub> = Σ δ<sub>ak</sub><sup>rs</sup> f<sub>k</sub><sup>rs</sup><br>
+BPR 路阻：t<sub>a</sub>(x<sub>a</sub>) = t<sub>a</sub><sup>0</sup> · [1 + α (x<sub>a</sub> / C<sub>a</sub>)<sup>β</sup>]　　α = 0.15, β = 4
+<span class="ex">α、β 取 1964 年原始 BPR 值。NCHRP 716 表 4.26 显示，0.5–1M 都市区干道平均 α 0.42、β 5.2。我用这组值作敏感性高值。形心连杆 α = 0、β = 1，时间不随流量变化。</span></div>
+
+<div class="widget" id="bprWidget">
+<h4>动手感受 BPR 曲线</h4>
+<p class="legend">拖动 α、β，看路段行驶时间随 V/C 怎么变。β 越大，拥堵前越"平"，超过通行能力后越"陡"。</p>
+<div class="two">
+<div>
+<label>α = <span id="bprA">0.15</span></label><input type="range" id="bprAlpha" min="0.05" max="1" step="0.01" value="0.15">
+<label>β = <span id="bprB">4</span></label><input type="range" id="bprBeta" min="1" max="8" step="0.1" value="4">
+<label>当前 V/C = <span id="bprX">1.0</span></label><input type="range" id="bprVC" min="0" max="2" step="0.05" value="1">
+<div class="out">t / t<sub>0</sub> = 1 + α·(V/C)<sup>β</sup> = <b id="bprOut">1.15</b><br>即自由流 10 分钟的路段此时需要 <b id="bprMin">11.5</b> 分钟</div>
+</div>
+<canvas id="bprCanvas" width="520" height="300"></canvas>
+</div>
+</div>
+
+<h4>Frank–Wolfe 与双共轭 Frank–Wolfe</h4>
+<ol>
+<li>在当前流量 x<sup>n</sup> 下算 t<sub>a</sub>(x<sup>n</sup>)。做全有全无（AON）最短路分配，得辅助流 y<sup>n</sup>。</li>
+<li>线搜索 λ ∈ [0,1]，最小化 Z(x<sup>n</sup> + λ(y<sup>n</sup> − x<sup>n</sup>))。</li>
+<li>x<sup>n+1</sup> = x<sup>n</sup> + λ(y<sup>n</sup> − x<sup>n</sup>)。</li>
+</ol>
+<p>经典 FW 在最优点附近锯齿，收敛慢。<b>双共轭 FW（bi-conjugate, BFW）</b>把下降方向与前两次方向做共轭组合。这大幅加速收敛。AequilibraE 的 bfw 41 次迭代就到 1e-4。TransCAD 4.5 的经典 FW 跑了约 300 次，停在 1.6e-4。</p>
+<h4>相对间隙（Relative gap）</h4>
+<div class="fm">rgap = [Σ<sub>a</sub> x<sub>a</sub> t<sub>a</sub>(x<sub>a</sub>) − Σ<sub>rs</sub> q<sub>rs</sub> u<sub>rs</sub>] / Σ<sub>a</sub> x<sub>a</sub> t<sub>a</sub>(x<sub>a</sub>)
+<span class="ex">相对间隙是当前总行驶时间与"全部走当前最短路"总时间之差的占比。0 为完美均衡。FHWA 建议 ≤ 1e-4。方案比较时它尤其重要。收敛不足，方案间的差异会被收敛噪声淹没。本项目 8.9 × 10⁻⁵。</span></div>
+<h4>反馈循环（Feedback）</h4>
+<p>出行分布用的时间应等于交通分配后的拥堵时间。所以我循环 3 轮。第 1 轮：自由流 skim → 重力 → 方式 → ToD → UE → 拥堵 skim。拥堵 skim 与上一轮做 MSA（method of successive averages）平均，再进第 2 轮。以此类推。早高峰小汽车 OD 的变化 RMSE 从第 2 轮 4.0% 降到第 3 轮 1.2%。</p>
+<h4>分配设置</h4>
+<p>4 个车种类（multi-class）：car、hinterland、ext_hub（pce 1）、ext_road（pce 1.5，货车多）。它们共用同一路阻函数，所以总 pcu 的均衡解唯一。算法 bfw，rgap 目标 1e-4。</p>
+</div>
+
+<h3 id="fs-results">结果：西昌早高峰长什么样</h3>
+<div class="grid g4">
+  <div class="tile"><div class="v">3.20 M</div><div class="k">日车公里（veh-km）</div><div class="d">居民 32% / 外围 29% / 对外枢纽 39%</div></div>
+  <div class="tile"><div class="v">19% → 42%</div><div class="k">国道 / 快速路里程 → 承担车公里</div><div class="d">trunk + primary 36% 里程承担 65% VKT</div></div>
+  <div class="tile"><div class="v">77 条</div><div class="k">早高峰 V/C &gt; 1 路段</div><div class="d">占加载里程 6.8%；最大 1.93（航天大道）</div></div>
+  <div class="tile"><div class="v">8.9e-5</div><div class="k">相对间隙</div><div class="d">bfw 41 次迭代；反馈 3 轮</div></div>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/res_volume_map.png" alt="volume map" data-cap="现状早高峰路段流量，线宽随流量。"><figcaption><b>图 8-5 早高峰流量。</b>脊线：航天大道（G108/G248）→ 迎宾东路 → 南山大道 → 三岔口南路 / 合盐路二段。老城长安路是唯一进前五的非干线。</figcaption></figure>
+<figure class="fig"><img src="img/res_vc_map.png" alt="V/C map" data-cap="现状早高峰 V/C（较大方向）。"><figcaption><b>图 8-6 V/C。</b>76% 加载里程 V/C &lt; 0.5。过载集中在航天大道和老城进出口。静态 UE 的 V/C &gt; 1 表示需求超过能力。现实中由排队和高峰扩散消化。</figcaption></figure>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/res_vkt_class.png" alt="VKT by class" data-cap="全日车公里按道路等级和来源。"><figcaption><b>图 8-7 车公里结构。</b>A 按等级。B 按来源。对外和枢纽车流贡献近四成车公里。这正是数据最弱、敏感性最大的部分。</figcaption></figure>
+<figure class="fig"><img src="img/res_diff_map.png" alt="2019 to now" data-cap="2019 到现状的全日流量变化，紫色为 2019 后通车道路。"><figcaption><b>图 8-8 2019 → 现状。</b>新通车道路（紫）分走老城北部穿越车流。</figcaption></figure>
+</div>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"I zoned the city into 52 internal and 14 external TAZs from a 100 m census grid. I coded an OSM network with capacity and speed by functional class. I generated trips with rates from national standards and small-city surveys. I distributed them with a doubly-constrained gravity model fitted to a target mean trip length. I applied distance-banded mode shares, because no survey existed to estimate a logit. I assigned the AM peak with bi-conjugate Frank–Wolfe user equilibrium to a relative gap of 1e-4. I fed congested times back to distribution three times. There were no counts, so I spent as much effort on sensitivity as on the base run."</p></div>
+
+<div class="note warn"><span class="t">局限</span>
+<ul style="margin:0">
+<li>所有行为参数都是借来的，来源是规范、宜兴 / 桂林调查、NCHRP 716。没有本地调查。</li>
+<li>只模拟早高峰小时。小城市的午间回家高峰（宜兴 11–12 时 10.4%）没有模拟。</li>
+<li>电动车（占 1/3 出行）和公交没有分配到路网。</li>
+<li>V/C 绝对值不可信，因为通行能力不含信号折减。只用于相对比较。</li>
+</ul></div>
+</section>
+
+<section class="panel" id="tab-tools" role="tabpanel">
+<h2>9 · AequilibraE 与 TransCAD：谁算的、谁复现的</h2>
+<p class="lead">主模型跑在 Python + AequilibraE 上：可复现、免费、能批量跑 47 次敏感性。TransCAD 4.5 是<b>独立复现引擎</b>（replication）：同样的输入换一个软件，流量是否相同？答案是相同，R² 0.9999。这说明分配结果不依赖软件实现。</p>
+
+<div class="two">
+<div class="card">
+<h3>AequilibraE 是什么</h3>
+<p>开源的 Python 交通需求建模库。功能有四块：网络 / 图（Graph）构建；最短路与阻抗矩阵（NetworkSkimming）；多车种静态交通分配（all-or-nothing、MSA、Frank–Wolfe、conjugate FW、<b>bi-conjugate FW</b>）；BPR 等路阻函数、选择路段分析（select-link）、OMX 矩阵格式。它相当于 TransCAD / Visum / Cube 的"分配引擎"。它没有 GUI，也没有现成的重力模型和方式划分。这两步我用 numpy 自己写。</p>
+<h4>项目中的角色</h4>
+<ul>
+<li>把 <code>links.gpkg</code> 建成 AequilibraE 项目。现状、2019、2035 各建一个。</li>
+<li>阻抗矩阵用 Graph。<code>set_skimming(["time","distance"])</code> 取时间和距离。<code>set_blocked_centroid_flows(True)</code> 禁止路径穿过形心。</li>
+<li>分配：每车种一个 TrafficClass。<code>set_vdf("BPR")</code> 读逐路段的 α / β 字段。<code>set_algorithm("bfw")</code>，rgap 目标 1e-4。</li>
+<li>用 select-link 分析得到路口转向流量。VISSIM 用这些流量。</li>
+</ul>
+<p class="legend">环境提醒：AequilibraE 需要 pandas 3。这和 geopandas 环境冲突。所以我把它单独放在一个 venv 里。流水线在两个解释器之间切换。</p>
+</div>
+<div class="card">
+<h3>TransCAD 通用知识</h3>
+<ul>
+<li>Caliper 公司的 GIS-based 交通规划软件。它是美国 MPO 的主流工具之一，与 Cube、Visum、EMME 并列。</li>
+<li><b>数据结构</b>：地理文件（.dbd）分线层和点层。线层端点自动生成节点层。<b>网络（.net）</b>由线层创建。它含方向字段（AB / BA 成对字段自动配对）、长度、时间、通行能力。<b>矩阵（.mtx）</b>含多个核心（core）和索引（index）。</li>
+<li><b>Centroid 形心</b>：在 Network Settings 中指定形心节点选择集。路径不得穿过形心。这等价于 AequilibraE 的 blocked centroid flows。不设这项，结果会不同。</li>
+<li><b>菜单路线</b>：Networks/Paths → Create / Settings / Multiple Paths，得阻抗矩阵。Planning → Trip Distribution → Gravity Evaluation，双约束，阻抗可选 Exponential / Gamma / Power。Planning → Traffic Assignment，Method = User Equilibrium，设 Time 字段、Capacity 字段、Alpha / Beta、Iterations、Convergence。</li>
+<li><b>GISDK</b>：TransCAD 的脚本语言（Caliper Script）。宏用 <code>RSCC.EXE</code> 编译成 UI 数据库。用 <code>tcw.exe -a &lt;ui&gt; -ai "&lt;macro&gt;"</code> 从命令行启动。批处理过程用 <code>RunMacro("TCB Run Procedure", …)</code> 调用。它和菜单命令是同一套代码。</li>
+</ul>
+</div>
+</div>
+
+<h3>Python 流水线：一条命令</h3>
+<pre><code>python scripts/run_all.py now 2019 [--sensitivity --lhs 20 --workers 4] [--set car_share=high ...]</code></pre>
+<div class="steps">
+  <div class="step"><b>p2_generation（base env）</b>出行生成 → 小区 P/A 表、出入口表、外部日流量、config.json</div>
+  <div class="step"><b>p5_assignment（aeq venv）</b>内部调用 p3 重力 ↔ p4 方式划分 ↔ 时段 ↔ UE，反馈 3 轮 → link_results.csv、od_matrices.omx、run_summary.json</div>
+  <div class="step"><b>p5c_link_gpkg（base）</b>把流量写回 GeoPackage，出地图</div>
+  <div class="step"><b>p5b_export_transcad（base）</b>导出 shapefile、PA、OD、model_params.csv 给 TransCAD</div>
+  <div class="step"><b>p6_checks（base）</b>按 FHWA 手册结构做合理性检查 → checks.md</div>
+  <div class="step"><b>--sensitivity</b>p6_sensitivity 多进程跑 OAT + LHS，再出图</div>
+</div>
+<p class="legend">所有参数由 <code>model_config.build_config(scenario, overrides)</code> 解析成一个 JSON 字典。每个行为参数从 <code>params.csv</code> 取值。取值方式是 low / base / high 三档，或按 u ∈ [−1, 1] 分段线性插值。47 次敏感性运行复用完全相同的代码。</p>
+
+<h3>TransCAD 复现：怎么做的</h3>
+<div class="card">
+<p><code>tc45_run.py --scenario now</code> 一条命令，分五步：</p>
+<ol>
+<li><b>prep</b>：整理成 <code>links.shp</code>，含 1,500 路段 + 133 形心连杆，字段有 T_AB / T_BA、CAP_AB / CAP_BA、ALPHA、BETA 等。再整理 <code>pa.dbf</code> 和 <code>od_fixed.dbf</code>（66 × 66 格），生成参数宏。单行路段设 T_BA = 9,999 min、CAP_BA = 99,999。原因是 GISDK 4.5 写不了拓扑 Dir 字段。</li>
+<li><b>compile</b>：<code>RSCC.EXE</code> 把 GISDK 宏编译成 UI 数据库。</li>
+<li><b>assign</b>：运行 <code>tcw.exe -q -a xc_ui -ai "XC Assign Only"</code>。约 30 秒，自动退出。</li>
+<li><b>full</b>：运行 <code>"XC Full Chain"</code>。TransCAD 自己跑重力 + 方式 + 分配。</li>
+<li><b>collect</b>：收集 CSV。合并路段 ID 对照表。出对比图和数字宏。</li>
+</ol>
+<h4>GISDK 宏做了什么</h4>
+<ul>
+<li><b>Build Network</b>：<code>ImportArcViewShape</code> 导入 shp。按连杆识别形心节点。<code>CreateNetwork</code> 带时间、容量、α、β 字段。<code>ChangeNetworkSettings</code> 启用 Centroids。</li>
+<li><b>Skim</b>：Multiple Paths 最小化自由流时间。与 Python 核对，差 ≤ 0.005 min。</li>
+<li><b>Assign</b>：<code>TCB Run Procedure "Assignment"</code>。Load Method 5 = UE，Convergence 0.0001，Iterations 500。</li>
+<li><b>Full Chain</b>：Gravity 每个目的单独调用一次。原因是 4.5 一次跑三个目的时 HBO 为空，这是测试中发现的。设置为 Double constraint、Exponential 阻抗，c 取 Python 标定值。TransposeMatrix 得回程。Matrix Fill 合成早高峰小汽车 OD，再跑 UE。</li>
+</ul>
+</div>
+
+<h3>复现结果</h3>
+<p>验收标准事先定好：R² ≥ 0.99、%RMSE ≤ 5%、GEH &lt; 5 的比例 ≥ 95%、pcu-km 差 ±1%。</p>
+<div class="tbl-wrap"><table>
+<tr><th>指标</th><th>仅分配（同一 OD）</th><th>全链（TransCAD 自己做重力 + 方式）</th></tr>
+<tr><td>R²</td><td><b>0.9999</b></td><td>0.963</td></tr>
+<tr><td>过原点斜率</td><td>1.000</td><td>0.813</td></tr>
+<tr><td>%RMSE</td><td>1.7%</td><td>51.5%</td></tr>
+<tr><td>GEH &lt; 5</td><td>99.7%</td><td>80.8%</td></tr>
+<tr><td>pcu-km 差异</td><td>+0.02%</td><td>−13.8%</td></tr>
+<tr><td>相对间隙</td><td>1.6e-4（经典 FW 约 300 次后停止下降）</td><td>2.9e-4</td></tr>
+</table></div>
+<figure class="fig"><img src="img/transcad_compare.png" alt="TransCAD vs AequilibraE" data-cap="(a) 同 OD 仅分配：TransCAD 4.5 vs AequilibraE 单向早高峰流量；(b) 全链复现。"><figcaption><b>图 9-1 复现对比。</b>(a) 点全在 1:1 线上。(b) 过原点斜率 0.81，TransCAD 全链流量系统性偏低（pcu-km −13.8%）。</figcaption></figure>
+<div class="card">
+<h4>为什么仅分配 0.9999，全链只有 0.963</h4>
+<ol>
+<li><b>仅分配</b>：两边的 OD、路网、路阻函数完全相同。差异只来自算法和收敛。TransCAD 经典 FW 停在 1.6e-4，AequilibraE BFW 到 0.9e-4。差异集中在低流量路段。三项中间检查一致：自由流 skim 差 ≤ 0.005 min；无车流穿越形心；单行反向流量为零。</li>
+<li><b>全链</b>：TransCAD 版有两处有意简化。一是方式划分不按距离分段，用统一比例。二是没有分布—分配反馈。统一比例使早高峰小汽车车次减少 7%，短途比例上升。所以 pcu-km 低 13.8%。</li>
+<li>另一个技术原因在阻抗矩阵。导出的阻抗矩阵是最后一轮反馈 MSA 平均之后的。Python 最后一轮分布用的是平均之前的。HBO / NHB 的 β 大，对阻抗敏感，分布矩阵差 20%。HBW 只差 1%。我用同阻抗、同 β 的 numpy Furness 核对 TransCAD 重力，逐格差 ≤ 0.005 人次。这说明<b>重力模型实现本身一致</b>。</li>
+<li><b>结论</b>：结果不依赖软件实现。Python 模型中的分距离方式划分和反馈对路段流量有实质影响。它们不是可忽略的细节。我把差异原因写进报告，不只报 0.9999。</li>
+</ol>
+</div>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"I used TransCAD 4.5 as the replication engine. A GISDK macro builds the network with a centroid set. It then runs Multiple Paths, Gravity and UE Assignment. I compiled it with RSCC and launched it from Python, so the whole run is one command. Assignment-only replication matched AequilibraE to R² 0.9999. The full chain matched less well, R² 0.96. That is because I simplified mode split and dropped feedback in the TransCAD version on purpose. I documented why instead of hiding it. The version is old. But the concepts carry straight over to TransCAD 9/10, Cube or Visum: network layer, centroid set, UE dialog."</p></div>
+
+<div class="note warn"><span class="t">局限</span>复现用的是 TransCAD 4.5（GISDK 宏），是 2000 年代的旧版。复现全部通过 GISDK 宏脚本完成。多车种分配共用同一路阻函数时，总 pcu 流量唯一。各车种的分量不一定唯一。</div>
+</section>
+
+<section class="panel" id="tab-valid" role="tabpanel">
+<h2>10 · 没有计数怎么"验证"：合理性检查、47 组敏感性、复现</h2>
+<p class="lead">没有流量计数，怎么检验模型？答案分三层。<b>合理性检查</b>：中间量是否落在同类城市和规范范围内。<b>敏感性</b>：47 次完整运行，看结论是否稳健。<b>复现</b>：TransCAD 独立重算。需要说明：这<b>不是</b> validation。</p>
+
+<div class="card">
+<h3>FHWA 手册的三个概念</h3>
+<p>《Travel Model Validation and Reasonableness Checking Manual, 2nd ed.》（Cambridge Systematics for FHWA / TMIP, 2010）区分三个概念：</p>
+<div class="grid g3">
+<div class="tile"><div class="v" style="font-size:18px">Validation 验证</div><div class="d">把模型输出和<b>独立观测</b>比较。观测包括断面 / 围线计数（screenline / cordon counts）、出行调查、行程时间。指标有 %RMSE by volume group、GEH、VMT by facility class vs HPMS、screenline 误差 ±10%。</div></div>
+<div class="tile"><div class="v" style="font-size:18px">Reasonableness 合理性</div><div class="d">看中间量和结果是否在合理范围。范围来自同类城市、规范和经验。检查项有人均出行率、目的结构、平均出行长度、区内出行比例、分担率、人均 VMT、V/C 分布、收敛。</div></div>
+<div class="tile"><div class="v" style="font-size:18px">Sensitivity 敏感性</div><div class="d">参数变化时，看模型响应是否合理，结论是否稳健。</div></div>
+</div>
+<p>西昌没有计数和调查。所以本项目只做后两类。我明确不叫它 validation。</p>
+</div>
+
+<h3>第一层：合理性检查</h3>
+<div class="tbl-wrap"><table>
+<tr><th>步骤</th><th>指标</th><th>模型</th><th>参照</th><th>判断</th></tr>
+<tr><td rowspan="3">生成</td><td>人均日出行</td><td>2.5</td><td>2.1–2.8</td><td>合理（构造使然）</td></tr>
+<tr><td>户均日出行</td><td>6.5</td><td>5.5–7.3</td><td>合理</td></tr>
+<tr><td>HBW / HBO / NHB</td><td>40 / 50 / 10</td><td>35–45 / 45–55 / 5–15</td><td>合理（输入）</td></tr>
+<tr><td rowspan="4">分布</td><td>HBW 平均距离</td><td>4.5 km</td><td>3.5–5.5</td><td>合理（标定目标）</td></tr>
+<tr><td>HBO / NHB 平均距离</td><td>3.0 / 3.0</td><td>2–4 / 2–4.5</td><td>合理</td></tr>
+<tr><td>区内出行</td><td>7.5%</td><td>&lt; 15%</td><td>合理</td></tr>
+<tr><td>HBW 小汽车时间</td><td>8.4 min</td><td>13.6–22（门到门）</td><td><b>注意</b></td></tr>
+<tr><td rowspan="3">方式</td><td>慢行合计</td><td>65%</td><td>≥ 60%</td><td>合理</td></tr>
+<tr><td>步行平均距离</td><td>1.57 km</td><td>0.8–1.5</td><td><b>注意</b></td></tr>
+<tr><td>电动车平均距离</td><td>4.0 km</td><td>4.0–7.0</td><td>合理</td></tr>
+<tr><td rowspan="4">分配</td><td>人均居民小汽车 VKT</td><td>2.18 km/日</td><td>1–6</td><td>合理</td></tr>
+<tr><td>V/C &gt; 1 加载里程</td><td>6.8%</td><td>&lt; 10%</td><td>合理</td></tr>
+<tr><td>相对间隙</td><td>8.9e-5</td><td>≤ 1e-4</td><td>合理</td></tr>
+<tr><td>末轮反馈 OD 变化</td><td>1.2% RMSE</td><td>&lt; 5%</td><td>合理</td></tr>
+</table></div>
+<div class="note"><span class="t">要点</span>出行率、目的结构、分担率是输入。平均距离是标定目标。它们落在范围内是"构造使然（by construction）"。这只说明输入没选错，不说明模型对。真正有信息量的是<b>没有直接设定</b>的量：区内出行比例 7.5%；VKT 按等级的结构，干线 + 主干占 1/3 里程、承担 2/3 VKT；V/C 分布，76% 加载里程 &lt; 0.5；收敛。</div>
+
+<h3>第二层：47 组敏感性</h3>
+<div class="card">
+<p><b>13 个参数</b>：出行率、目的结构、小汽车份额、高峰小时比例、过境比例、BPR α、BPR β、通行能力档、对外交通量、出行距离目标、载客率、G5 下道比例、外围进城比例。</p>
+<ul>
+<li><b>OAT（one-at-a-time）</b>：每次只改一个参数，取低或高，其余保持基准。共 13 × 2 = <b>26</b> 次。用它看单个参数影响的方向和大小（龙卷风图）。</li>
+<li><b>LHS（Latin hypercube sampling）</b>：13 个参数同时抽样 <b>20</b> 次。做法是每一维分成 n 层，每层抽一个点，层内随机，再随机配对。它比简单随机抽样用更少样本覆盖参数空间。用它看参数联合变化时结果的区间。</li>
+<li>加上基准，共 <b>47</b> 次完整四阶段运行（含反馈）。多进程 4 workers。</li>
+</ul>
+<h4>Spearman 秩相关</h4>
+<div class="fm">ρ = 1 − 6 Σ d<sub>i</sub>² / ( n (n² − 1) )
+<span class="ex">d<sub>i</sub> 是同一路段在两次运行中的排名之差。我把每次运行的路段日流量和基准运行比：中位 <b>0.988</b>、最低 <b>0.90</b>。参数主要把全网流量一起放大或缩小。相对次序稳定。</span></div>
+<h4>结果</h4>
+<ul>
+<li>对总 VKT 影响最大的参数：对外交通量 −15% / +19%、小汽车份额 −15% / +16%、外围进城比例 ±12%，然后是出行率、出行距离。LHS 下总 VKT 的 5–95% 区间是 2.59–3.71 百万（−19% / +16%）。最重要的三个参数中，两个和研究范围外的交通有关。那正是数据最弱的地方。</li>
+<li>对拥堵指标（V/C &gt; 1 比例）影响最大的参数：通行能力（13.8%–2.4%）、高峰小时比例。它们几乎不改变 VKT。BPR 参数和过境比例对两者影响都小。</li>
+<li>排名稳定性：基准最忙的 25 条路段中，14 条在 ≥ 80% 的运行中保持前 20。前 15 走廊中，14 条在 ≥ 80% 的运行中保持前 15。</li>
+<li><b>政策含义</b>：要缩小暴露量的不确定性，最有效的办法是分车型断面计数。地点在出入口和主要入城走廊。这些计数组成围绕研究范围的 cordon line。它们同时约束对外量、外围比例、小汽车份额。</li>
+</ul>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/res_tornado.png" alt="tornado" data-cap="单因素敏感性龙卷风图：A 总车公里变化；B V/C>1 路段比例。"><figcaption><b>图 10-1 龙卷风图。</b>A：对外交通量和小汽车份额主导 VKT。B：通行能力和高峰比例主导拥堵。两组几乎不重叠。</figcaption></figure>
+<figure class="fig"><img src="img/res_rank_stability.png" alt="rank stability" data-cap="基准最忙 25 条路段在 47 次运行中的排名区间。"><figcaption><b>图 10-2 排名稳定性。</b>点是中位，线是 P10–P90，竖线是基准。蓝色表示 ≥ 80% 的运行进前 20。</figcaption></figure>
+</div>
+
+<h3>第三层：TransCAD 复现</h3>
+<p>同一 OD 在 TransCAD 4.5 中分配，R² 0.9999。详见第 9 节。</p>
+
+<h3>进行中：高德速度验证</h3>
+<div class="card">
+<p>没有计数时，行程时间是唯一免费可得的独立观测。高德交通态势 API 不对新用户开放。所以我用驾车路线规划 API 探测 <b>40 条</b>双向路线，长 1.2–4 km。路线包括 G5、航天大道、武大线、海滨中路、南山大道等。每天 24 个时段：早晚高峰每 15 分钟一次，再加 14:00、23:00 对照。计划跑 14 天。</p>
+<p><b>检验事先固定</b>：算观测的高峰 / 深夜行程时间比与模型 V/C 的 Spearman 秩相关。再单独检查航天大道、南山大道、长安路在观测中是否也最慢。判读标准：ρ ≳ 0.4，p &lt; 0.05，且高 V/C 走廊在观测中最拥堵 → 相对拥堵判断通过。否则 V/C 排序不可靠。这仍不是流量验证，只验证相对拥堵。</p>
+</div>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"Three layers. First, reasonableness. I checked per-capita VKT, trip length, mode shares, intrazonal share and V/C distribution. I compared them with comparable cities and NCHRP 716 ranges. Second, sensitivity. I made 47 full runs: 26 one-at-a-time and 20 Latin hypercube over 13 parameters. Link rankings had a median Spearman of 0.99. So I only report findings that hold across all runs. Third, replication. The same inputs in TransCAD reproduced the volumes to R² 0.9999. It is a sketch-level model. It is for ranking and scenario differences, never for absolute volumes. In an agency I would add screenline counts and %RMSE by volume class per the FHWA manual. I would also add a household survey for trip rates."</p></div>
+</section>
+
+<section class="panel" id="tab-exposure" role="tabpanel">
+<h2>11 · 暴露调整：SPF、经验贝叶斯，结论怎么翻过来的</h2>
+<p class="lead">我有 2019 年每条路段的车公里（VKT）。有了它，就能做美国 HSM 的标准动作。第一步，按道路等级拟合<b>安全性能函数 SPF</b>。SPF 根据交通量预测这类路"应该"有多少事故。第二步，用<b>经验贝叶斯 EB</b> 给观测值和预测值加权，得到"超额事故"（PSI）。第三步，重新回答一个问题：过境干道是真的危险，还是只是车多？</p>
+<div class="toc"><a href="#ex-snap">事故匹配</a><a href="#ex-spf">SPF</a><a href="#ex-eb">EB</a><a href="#ex-grid">过境干道检验</a><a href="#ex-rank">排名变化</a></div>
+
+<h3 id="ex-snap">事故匹配到 2019 路网</h3>
+<p>我把 9,384 个碰撞 / 追尾 / 翻车点吸附到 2019 模型路网。规则有三条。30 m 内的路段算候选。25 m 内有 ≥ 3 条邻接路段的，算交叉口事故，归到等级最高的进口路段。路中事故取最近路段。结果：57% 落在模型路段（5,380 起）。20% 在支路小巷。22% 离任何道路 &gt; 30 m。事故坐标很粗，只有 1,992 个不同坐标。所以分析单位是<b>走廊</b>。走廊是同名路段合并，无名国省道按编号合并。640 条路段有流量。它们承载 4,342 起事故，年约 878 百万车公里。182 条走廊中，年 MVKT ≥ 1 且长度 ≥ 0.5 km 的有 48 条。这些走廊进入排名。</p>
+
+<h3 id="ex-spf">SPF：负二项回归</h3>
+<div class="card">
+<p><b>原理</b>：SPF 是安全性能函数（Safety Performance Function）。它是 HSM 的核心。给定道路类型和暴露量，它预测期望事故数。事故数是过度离散的计数，所以用负二项回归（NB2）：</p>
+<div class="fm">N<sub>i</sub> ~ NegBin(μ<sub>i</sub>, k)　　Var = μ + k μ²<br>
+μ<sub>i</sub> = exp(β<sub>0</sub>) · MVKT<sub>i</sub><sup>β<sub>1</sub></sup>　⇔　ln μ<sub>i</sub> = β<sub>0</sub> + β<sub>1</sub> ln MVKT<sub>i</sub>　　MVKT = 日 VKT × 365 / 10⁶
+<span class="ex">β<sub>1</sub> 是事故对暴露量的弹性。文献中城市干道通常 0.6–1.0。&lt; 1 表示"安全在数量中"：车多时车速低，驾驶员更警觉。k 是过度离散参数。k 越大，越离散。</span></div>
+<div class="tbl-wrap"><table>
+<tr><th>等级</th><th>路段</th><th>事故</th><th>MVKT/年</th><th>β<sub>1</sub>（s.e.）</th><th>k</th></tr>
+<tr><td>高速</td><td>26</td><td>69</td><td>169</td><td>0.26 (0.42)</td><td>33.6</td></tr>
+<tr><td>国道 / 快速路</td><td>230</td><td>1,634</td><td>413</td><td><b>0.45 (0.07)</b></td><td>5.5</td></tr>
+<tr><td>主干路</td><td>70</td><td>360</td><td>170</td><td>0.43 (0.23)</td><td>9.3</td></tr>
+<tr><td>次干路</td><td>165</td><td>1,256</td><td>95</td><td>0.31 (0.08)</td><td>4.9</td></tr>
+<tr><td>支路及匝道</td><td>149</td><td>1,023</td><td>32</td><td>0.00 (0.05)</td><td>4.9</td></tr>
+</table></div>
+<p><b>弹性远低于 1，有三个原因。它们分不开。</b>第一，模型流量有测量误差，弹性向零衰减（attenuation bias）。第二，事故坐标粗糙，很多事故归到地标所在的路段。第三，真实关系就是非线性的。所以我不解释 β<sub>1</sub> 的大小。我只把 SPF 当作"同等级、同交通量的预期基准"。</p>
+</div>
+<figure class="fig"><img src="img/p7_spf_by_class.png" alt="SPF by class" data-cap="按道路等级的 SPF：点为路段（事故 + 0.5，对数坐标），线为负二项拟合。"><figcaption><b>图 11-1 分等级 SPF。</b>曲线很平，弹性 0.3–0.45。同等级内交通量翻倍，事故远不到翻倍。</figcaption></figure>
+
+<h3 id="ex-eb">经验贝叶斯与 PSI</h3>
+<div class="card">
+<p><b>原理</b>（Hauer 1997；HSM 第 4 章）：观测事故数有随机波动。它还受<b>回归均值</b>影响：一年事故多的地点，次年会自然回落。EB 按可靠性给观测值和 SPF 预测值加权：</p>
+<div class="fm">w = 1 / (1 + k · μ)<br>
+N<sub>EB</sub> = w · μ + (1 − w) · N<sub>obs</sub><br>
+Excess（PSI, potential for safety improvement）= N<sub>EB</sub> − μ
+<span class="ex">μ 越大或 k 越大，w 越小。w 越小，越信观测值。PSI 回答一个问题："这条路比同等级、同交通量的路多出多少事故？"这部分正是工程措施能减少的。HSM 的网络筛选（network screening）推荐按 EB 超额排序。不按事故数，也不按事故率。</span></div>
+
+<div class="widget" id="ebWidget">
+<h4>动手算一次 EB</h4>
+<p class="legend">拖动滑块。看 EB 权重 w 怎么随过度离散参数 k 和预测值 μ 变化。本数据 k ≈ 5，所以 w 几乎为 0。EB 超额 ≈ 观测 − 预测。</p>
+<div class="two">
+<div>
+<label>SPF 预测 μ = <span id="ebMu">100</span> 起</label><input type="range" id="ebMuR" min="1" max="600" step="1" value="100">
+<label>观测 N<sub>obs</sub> = <span id="ebN">150</span> 起</label><input type="range" id="ebNR" min="0" max="600" step="1" value="150">
+<label>过度离散参数 k = <span id="ebK">5.0</span></label><input type="range" id="ebKR" min="0.01" max="10" step="0.01" value="5">
+</div>
+<div class="out">w = 1 / (1 + k·μ) = <b id="ebW">0.002</b><br>N<sub>EB</sub> = w·μ + (1 − w)·N<sub>obs</sub> = <b id="ebEB">149.9</b><br>PSI = N<sub>EB</sub> − μ = <b id="ebPSI">+49.9</b><br><span id="ebRead" class="legend"></span></div>
+</div>
+<p class="legend">试试 k = 0.05、μ = 20、N = 40。权重变成 0.5。EB 把一年的"运气"拉回来一半。</p>
+</div>
+
+<h4>三种筛选口径</h4>
+<div class="tbl-wrap"><table>
+<tr><th>口径</th><th>优点</th><th>缺点</th></tr>
+<tr><td>事故数</td><td>直观</td><td>自动偏向大流量道路</td></tr>
+<tr><td>事故率（起 / 百万车公里）</td><td>纠正暴露量</td><td>走向另一个极端。短小街道几十起事故，暴露量极小，事故率虚高（文汇路 55.7、风情园路 39.7）。而小暴露量正是没有用流量计数校准的模型最不可靠的地方</td></tr>
+<tr><td>EB 超额</td><td>结合两者，抑制小样本</td><td>本数据 k ≈ 5 很大。EB 超额 ≈ 观测 − 预测</td></tr>
+</table></div>
+</div>
+
+<h3 id="ex-grid">过境干道检验：网格模型前后对比</h3>
+<div class="card">
+<p>这张卡检验"过境干道危险"是否成立。我先在 250 m 网格（619 格）<b>原样复现</b>第一阶段的模型：事故 ~ ln(1 + POI)。系数和 33 个超额网格完全一致。然后我加入两个变量：ln(1 + 日 VKT / 1000)，以及"网格内无模型路段"虚拟变量。最后我加入"过境干道"虚拟变量，看它的 IRR（incidence rate ratio，发生率比）：</p>
+<div class="tbl-wrap"><table>
+<tr><th></th><th>仅 POI</th><th>+ ln(VKT)</th><th>47 次运行范围</th></tr>
+<tr><td>ln(1 + POI) 弹性</td><td>0.65 (0.04)</td><td>0.53 (0.05)</td><td>—</td></tr>
+<tr><td>ln(1 + VKT/1000) 弹性</td><td>—</td><td><b>0.53 (0.10)</b></td><td>0.46–0.62</td></tr>
+<tr><td>对数似然</td><td>−1,650.1</td><td>−1,599.6（+50.6）</td><td>—</td></tr>
+<tr><td>超额网格 z &gt; 2</td><td>33（1,484 观测 / 204 预期）</td><td>25</td><td>23–26</td></tr>
+<tr><td>原 33 个仍 z &gt; 2</td><td>33</td><td><b>18</b></td><td>18–19</td></tr>
+<tr><td>其中在过境干道</td><td>13</td><td>8</td><td>—</td></tr>
+<tr><td><b>过境干道虚拟变量 IRR</b></td><td><b>2.68</b>（p &lt; 10⁻⁶）</td><td><b>1.22</b>（p = 0.28）</td><td>1.19–1.28；p 0.18–0.34</td></tr>
+</table></div>
+<p><b>三层结论</b>：(1) 交通量本身解释力强。POI 弹性下降。第一阶段归于"活动"的一部分，其实是车流。(2) "过境干道"作为<b>类别</b>不显著了。47 次运行中它都不显著。(3) 具体<b>地点</b>的超额仍在。例子是武大线、航天大道、丹桂桥的若干网格。<b>风险属于地点，不属于道路类别。</b></p>
+</div>
+<figure class="fig"><img src="img/p7_residual_before_after.jpg" alt="residual before after" data-cap="网格模型 Pearson 残差：(a) 仅 POI；(b) 加车公里。黑框为原 33 个超额网格。"><figcaption><b>图 11-2 残差前后对比。</b>加入车公里后，过境干道上的超额网格大半消失。留下的是几个具体地点。</figcaption></figure>
+
+<h3 id="ex-rank">排名变化：谁上去了，谁下来了</h3>
+<div class="grid g3">
+<div class="tile"><div class="v">航天大道</div><div class="k">事故数 #1 → 事故率 #27 → EB #48</div><div class="d">495 起，SPF 预测 592，超额 <b>−91</b>。它事故多，原因是车公里多：除 G5 外它车公里最多。47 次运行中，EB 排名中位 49，最好 42。</div></div>
+<div class="tile"><div class="v">武大线 (G348)</div><div class="k">EB #1，100% 运行稳居前 10</div><div class="d">293 起，预测 153，超额 <b>+139</b>。它曾被误标为 G108，我已修正。</div></div>
+<div class="tile"><div class="v">合盐路二段</div><div class="k">EB #2，100% 运行稳居前 10</div><div class="d">259 起，超额 <b>+106</b>。老城三条次干路升到第 3、4、5：长安路（85）、长安中路（75）、文汇路（66）。</div></div>
+</div>
+<p>三种排名的 Spearman 相关：数—率 0.63，数—EB 0.58，率—EB 0.60。事故数前 15 和 EB 前 15 只重合 9 条。有 <b>9 条</b>走廊在 ≥ 80% 的运行中稳居 EB 前 10：武大线、合盐路二段、长安路、长安中路、文汇路、海滨中路、G348 无名段、S219 无名段、长安东路。</p>
+<div class="figrow">
+<figure class="fig"><img src="img/p7_rank_slope.jpg" alt="rank slope" data-cap="走廊按事故数、事故率、EB 超额三种口径的排名斜率图，橙线为过境干道。"><figcaption><b>图 11-3 三种口径排名。</b>橙色是过境干道。它们从左到右大多向下掉。航天大道掉出 30 名外。武大线和合盐路二段升到第 1、2。</figcaption></figure>
+<figure class="fig"><img src="img/p7_rate_map.jpg" alt="rate map" data-cap="中心城区走廊事故率地图，标注 EB 前 8。"><figcaption><b>图 11-4 走廊事故率地图。</b>灰色是暴露量不足、没有排名的走廊。</figcaption></figure>
+</div>
+
+<div class="note org"><span class="t">投资含义：不改变"做什么"，改变"先在哪里做"</span>
+<p>风险杠杆有依据的地方：武大线、合盐路二段、长安路系。措施是几何设计、接入管理、中央隔离、路口渠化。优先做道路安全审计。主要是暴露量的地方：航天大道和过境干道整体。措施是分流过境车和货车、需求管理、弱势出行者过街设施和限速。残留的超额网格按点位处理。</p></div>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"The through-arterial rate ratio fell from 2.68 to 1.22. It lost significance. Hangtian Avenue has the most crashes. But it ranks 48th by empirical-Bayes excess. The reason is simple: it carries the most vehicle-kilometres. Three roads are riskier than their traffic predicts: Wuda Line, Heyan Road and the Chang'an Road corridor. They stay at the top in all 47 runs. So engineering treatments go there. The high-count arterial needs demand management and vulnerable-user protection instead."</p></div>
+
+<div class="note warn"><span class="t">四点局限（报告原文）</span>
+<ol style="margin:0">
+<li>流量来自示意级模型，没有用流量计数校准。它只覆盖机动车。电动车没有分配。</li>
+<li>全日流量由早高峰按统一比例换算。</li>
+<li>SPF 用同一批数据拟合。它是参照组，不是 HSM 意义上的本地校准 SPF。k ≈ 5 使 EB 权重几乎全在观测值。</li>
+<li>只有一年数据。回归均值无法完全排除。</li>
+</ol>
+<p style="margin:.4em 0 0">所以排名适合"决定先审计哪里"。它不直接决定投资。</p></div>
+</section>
+
+<section class="panel" id="tab-s2035" role="tabpanel">
+<h2>12 · 2035 情景：增长在哪里，政策能抵消多少</h2>
+<p class="lead">长期预测通常要两样东西：规划的人口 / 就业分配，以及规划路网。西昌只有国土空间总体规划的草案公示稿和人口规划。它没有中心城区用地结构、就业目标和道路系统规划图。所以这不是"预测"。这是<b>约束下的增长情景</b>（growth scenarios under constraints）。结论只用于情景之间的比较。</p>
+
+<div class="card">
+<h3>情景设定</h3>
+<h4>人口三档</h4>
+<p>中心城区 60 / 70 / 85 万人。85 万的算法：开发边界 85.79 km² ÷ 人均 100 m²。现状 47 万，所以新增 13 / 23 / 38 万人。</p>
+<h4>分配规则："水填法"</h4>
+<ol>
+<li>按规划的"西进、南拓、北提、东控、中优"分五组，各给权重。西 1.0（含新增的 53 号高铁新城小区，9.9 km²）。北 1.0（安宁走廊）。南 0.8。中 0.5（老城）。东 0.25。</li>
+<li>容量：增长片区毛密度上限 1 万人/km²。老城 +10%。东部 +5%。</li>
+<li>新增人口 ∝ 权重 × 剩余容量。溢出的人口再分配。基准情景结果：西 54%、北 31%、南 10%、老城 5%、东 0%。高情景用掉总容量的 92%。这说明 85 万接近上限。</li>
+</ol>
+<h4>其他假设</h4>
+<ul>
+<li>吸引量：POI 随人口增长，按现状人均分类 POI 算。各片区职住比不变。我没有把产业园当作独立就业中心。</li>
+<li>路网："十四五"市政道路大多已建成。真正新增的是<b>绕城高速</b>。几何来自 OSM construction 图层：双向 4 车道，49.7 km，4 处互通。三处立交的做法：300 m 内 34 条路段通行能力 × 1.3。</li>
+<li>小汽车份额 18% → 20 / 24 / 28%。对外交通年增 1.5 / 2.5 / 3.5%，共 10 年。</li>
+<li><b>政策对照</b>：在 2035 基准上，小汽车份额 −5 个百分点（24 → 19%）。一半转给公交，一半转给电动车。</li>
+</ul>
+</div>
+
+<h3>结果</h3>
+<div class="tbl-wrap"><table>
+<tr><th></th><th>现状</th><th>2035 低</th><th>基准</th><th>高</th><th>政策</th></tr>
+<tr><td>人口（千）</td><td>470</td><td>600</td><td>700</td><td>850</td><td>700</td></tr>
+<tr><td>小汽车份额</td><td>18%</td><td>20%</td><td>24%</td><td>28%</td><td>19%</td></tr>
+<tr><td>小汽车车次（千/日）</td><td>195</td><td>269</td><td>360</td><td>494</td><td>298</td></tr>
+<tr><td>日 VKT（百万）</td><td>3.20</td><td>3.88</td><td>4.56</td><td>5.46</td><td>4.10</td></tr>
+<tr><td>较现状</td><td>—</td><td><b>+21%</b></td><td><b>+42%</b></td><td><b>+70%</b></td><td><b>+28%</b></td></tr>
+<tr><td>人均居民小汽车 VKT（km/日）</td><td>2.18</td><td>2.35</td><td>2.59</td><td>2.81</td><td>2.19</td></tr>
+<tr><td>V/C &gt; 1 路段长度（km）</td><td>34</td><td>28</td><td>48</td><td>80</td><td>32</td></tr>
+<tr><td>干道期望事故（拟合弹性 / 正比）</td><td>—</td><td>+5 / +11%</td><td>+13 / +28%</td><td>+22 / +47%</td><td>+7 / +15%</td></tr>
+<tr><td>干道事故成本变化（亿元/年）</td><td>—</td><td>0.11–0.72</td><td>0.29–1.83</td><td>0.47–3.03</td><td>0.15–0.95</td></tr>
+</table></div>
+<div class="card">
+<ul>
+<li><b>空间格局</b>：增长在西、北。菜子山大道 1.1 万 → 2.3 万辆/日。宁远大道西延 ≈ 0 → 6,500。G5 全线 +55%。武大线 +40%。老城走廊持平或下降。长安路、三岔口南路、一环路在 ±5% 内。航天大道 +9%。合盐路二段 −3%。原因有两个。新增人口在老城外。绕城高速西段（约 1.1 万辆/日）分走了穿越老城北部的车流。</li>
+<li><b>低情景 V/C &gt; 1 里程比现状还低</b>（28 vs 34 km）。原因：绕城高速和立交增容抵消了需求增长。新瓶颈有三处：宁远大道西延进老城的入口、G5 西昌北匝道、航天大道北段。</li>
+<li><b>政策情景</b>：小汽车份额 −5 个百分点。VKT 增幅从 42% 降到 28%。V/C &gt; 1 里程 32 km，回到现状水平。航天大道 +9% → +1%。南山大道 +19% → +6%。干道事故增量避免约 <b>48%</b>。每年避免事故成本 0.14–0.88 亿元。</li>
+</ul>
+<p><b>事故换算方法</b>：用第 11 节按等级的 SPF（β<sub>1</sub> 0.31–0.45）。对现状有流量的 626 条干道路段算期望事故。给两个界：拟合弹性，以及 β<sub>1</sub> = 1 正比。成本算法：第一阶段 2019 事故成本 5.8–17.3 亿元/年 × 干道事故份额 37% × 百分比变化。</p>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/p8_volume_change.jpg" alt="2035 volume change" data-cap="2035 基准 − 现状日流量变化；紫色为新增绕城高速及匝道。"><figcaption><b>图 12-1 2035 基准 − 现状。</b>红色增长集中在西、北两翼。老城（灰）基本持平。紫色是绕城高速，它分流车流。</figcaption></figure>
+<figure class="fig"><img src="img/p8_pop_growth.png" alt="population growth" data-cap="2035 基准情景新增人口按小区；虚线为新增 53 号高铁新城小区。"><figcaption><b>图 12-2 新增人口分布。</b>西 54%、北 31%。</figcaption></figure>
+</div>
+<figure class="fig"><img src="img/p8_vc_compare.png" alt="V/C compare" data-cap="早高峰 V/C>1 路段：现状、2035 基准、2035 政策三面板。"><figcaption><b>图 12-3 V/C &gt; 1 路段三情景。</b>政策情景把过载里程拉回现状水平。</figcaption></figure>
+
+<div class="note org"><span class="t">结论一句话</span>增长在西、北两翼。方式转移 5 个百分点，能抵消约一半的拥堵增量和事故增量。<b>暴露量是可调节的政策杠杆。</b>这把第二阶段和第一阶段的恒等式接上了。</div>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"I test 2035 population scenarios of 600 to 850 thousand. Vehicle-kilometres rise 21 to 70 percent. Growth concentrates in the west and north, where the plan directs development. A five-point cut in car mode share avoids about half the predicted increase in arterial crashes. It also brings over-capacity mileage back to today's level. I present these as constrained growth scenarios, not forecasts. There is no land-use plan or employment target for the city centre."</p></div>
+
+<div class="note warn"><span class="t">局限（报告 7 点）</span>人口目标、权重、密度上限、老城 10% 都是判断。吸引量只随人口变，没有产业园就业中心。小汽车份额和对外增长率是假设。出行距离目标没有随城市扩大变长。绕城高速的车道 / 速度 / 互通是假设。立交只体现为通行能力。腹地人口不变。53 号小区可能重复计算数千人。模型没有用流量计数校准。</div>
+</section>
+
+<section class="panel" id="tab-vissim" role="tabpanel">
+<h2>13 · VISSIM 微观仿真 + SSAM：最差路口的两套信号方案</h2>
+<p class="lead">四阶段模型是静态宏观模型。它看不到信号、排队、左转抢间隙。所以我对一个路口往下钻。VISSIM 逐车、逐 0.1 秒模拟。FHWA 的 SSAM 再从轨迹里数"险情"，也就是冲突。<b>本节先讲它模拟了什么、为什么，再讲怎么搭建。</b></p>
+<div class="toc"><a href="#v-why">选哪个路口</a><a href="#v-theory">VISSIM 原理</a><a href="#v-ssam">SSAM 原理</a><a href="#v-build">本项目怎么搭</a><a href="#v-res">结果</a></div>
+
+<h3 id="v-why">为什么是航天大道 × 胜利南路</h3>
+<div class="card">
+<p>这张卡讲选点依据。三个条件同时满足：</p>
+<ol>
+<li>第一阶段交叉口排名第 1，共 77 起。其中碰撞 42 起，追尾 33 起。第 2 名只有 36 起。</li>
+<li><b>暴露量没有解释掉</b>。它的东南进口路段 EB 超额 +70 起。这约是 SPF 预测的 13 倍。在 640 条有流量路段中排第 6。而航天大道整条走廊的超额是负的。所以风险集中在这个<b>节点</b>，不在走廊。</li>
+<li>它是中心城区的平面信号交叉口。工程上可以操作。</li>
+</ol>
+<p>这是"宏观 → 中观 → 微观"链条的收口。需求模型说：航天大道整体只是车多。EB 说：但这个路口除外。VISSIM 回答：这个路口能怎么改。</p>
+</div>
+
+<h3 id="v-theory">VISSIM 原理</h3>
+<div class="card">
+<h4>微观仿真</h4>
+<p>微观仿真逐车、逐时间步模拟，本项目每秒 10 步。它模拟每辆车的加减速、换道、让行。它能表现信号、排队、交织等瓶颈。这些瓶颈静态宏观模型看不到，所以两者互补。</p>
+<h4>Wiedemann 跟驰模型（心理—生理模型）</h4>
+<p>跟驰模型描述驾驶员怎么跟前车。驾驶员根据距离和速度差在四种状态间切换：自由行驶（free driving）、接近（approaching）、跟驰（following）、制动（braking）。驾驶员不能精确保持距离。他会在感知阈值之间来回，这叫"跟驰振荡"。</p>
+<ul>
+<li><b>Wiedemann 74</b>（城市）：三个参数。ax 是平均停车间距，默认 2 m。bx_add 是安全距离附加项，取 2。bx_mult 是乘法项，取 3。期望安全距离 d = ax + (bx_add + bx_mult · z) · √v。饱和流率主要由这三个参数决定。可以按 1,600–1,800 pcu/h/车道调。</li>
+<li><b>Wiedemann 99</b>（高速 / 城际）：10 个参数，更细。例如 CC0 是停车距离，CC1 是车头时距，CC2 是跟驰变化。</li>
+<li>本项目机动车用 W74 "Urban (motorized)"。电动车路段用 "Cycle-Track (free overtaking)"，可以并排超车。</li>
+</ul>
+<h4>换道（lane change）</h4>
+<p>换道分两种。必要换道是为了走路径，自由换道是为了更快。参数：最大减速度、可接受减速度、<b>等待时间</b>、前后安全距离因子。等待时间默认 60 s，超过就被移出路网。现状方案 17 辆车被删除，就是这个机制。</p>
+<h4>冲突区（Conflict Areas）vs 优先规则（Priority Rules）</h4>
+<div class="tbl-wrap"><table>
+<tr><th></th><th>优先规则</th><th>冲突区</th></tr>
+<tr><td>定义方式</td><td>在路段上手工放停止线和冲突标记</td><td>VISSIM 在路段或连接器重叠处自动生成，默认被动（黄色）。用户设谁优先：红让绿</td></tr>
+<tr><td>参数</td><td>最小间隙时间、最小车头空距</td><td>前间隙（front gap）、后间隙（rear gap）、安全距离因子、可见性</td></tr>
+<tr><td>行为</td><td>让行车在停止线前判断</td><td>让行车预判主路车到达。它可以在冲突区内等间隙。许可左转就是这种行为</td></tr>
+<tr><td>推荐</td><td>精细可控，但繁琐</td><td>VISSIM 5.x 之后推荐。本项目全部用冲突区</td></tr>
+</table></div>
+<h4>信号、种子、评价</h4>
+<ul>
+<li><b>定时信号</b>：VisSig .sig 文件定义信号组、相位、周期、绿信比。信号灯头放在每条车道的停车线。学生版不能外接感应控制。</li>
+<li><b>随机种子</b>：车辆到达、期望车速、驾驶员参数都随机抽取。所以一次运行只是一个样本。本项目每方案跑 20 个种子。我以种子为样本做统计检验。前 120 s 是预热期，不计入。</li>
+<li><b>评价指标</b>：节点评价给出各转向流量、平均延误、停车次数、排队。另有行程时间段、延误段、数据采集点。</li>
+<li><b>Webster 配时</b>：周期 C<sub>0</sub> = (1.5 L + 5) / (1 − Y)。Y = Σ y<sub>i</sub>，即各相位关键车道流量比 q/s 之和。L 是总损失时间。有效绿 g<sub>i</sub> = (C − L) · y<sub>i</sub> / Y。本项目饱和流率 1,700 pcu/h/车道，每相位损失 4 s。</li>
+</ul>
+</div>
+
+<h3 id="v-ssam">SSAM：用"险情"代替事故</h3>
+<div class="card">
+<p><b>SSAM</b> 是替代安全评估模型（Surrogate Safety Assessment Model）。它由 FHWA 开发（Gettman &amp; Head 2008）。它读微观仿真的轨迹文件 .trj，识别车辆对的"冲突事件"，算替代安全指标。逻辑是：事故很少，仿真里不会发生事故。所以用"差一点撞上"代替。</p>
+<ul>
+<li><b>TTC（time to collision）</b>：碰撞时间。假设两车保持当前速度和方向，TTC 是到碰撞的时间。最小 TTC ≤ 阈值就记为冲突。默认阈值 <b>1.5 s</b>。</li>
+<li><b>PET（post-encroachment time）</b>：先到车离开冲突点，后到车到达冲突点，中间的时间差。阈值 ≤ <b>5 s</b>。</li>
+<li>还有 MaxS、DeltaS、DR、MaxDeltaV 等严重度代理指标。</li>
+<li><b>冲突角度分类</b>：按两车航向夹角分。&lt; 30° 是追尾（rear-end）。30–85° 是变道（lane-change）。&gt; 85° 是交叉（crossing）。SSAM 默认 crossing 阈值 80°，本项目改为 85°。</li>
+<li><b>常规清洗</b>：剔除 TTC = 0 的记录。这些是车辆外廓已重叠的仿真伪冲突，占 84–88%。剔除预热期。按每千辆进入车辆标准化。</li>
+</ul>
+<p><b>SSAM 冲突不等于事故。</b>它的用途是：看方案减少的冲突类型，是否对应该路口的主要事故类型。</p>
+</div>
+
+<h3 id="v-build">本项目怎么搭</h3>
+<div class="card">
+<p><b>软件</b>是 VISSIM 5.30 学生版。限制：路网 ≤ 1 km × 1 km，每次 ≤ 600 s，≤ 10 个信号机，无行人，无 COM 接口，有水印。没有 COM 就不能用 Python 驱动。但 .inp 是文本文件。所以<b>整个路网由脚本生成</b>。</p>
+<div class="steps">
+  <div class="step"><b>几何</b>来源是 OSM 和影像。路口是斜交四路口。航天大道是双幅路，每向 2 车道，两侧有辅路。四角渠化右转。停车线车道：航天大道 2 直 + 2 左，胜利南路 2 直 + 1 左。左转展宽 70 / 50 m。电动车道在机动车道外侧。脚本生成路段、连接器、车辆输入、路径决策、减速区、信号机与灯头、节点、延误段、排队计数器、冲突区、Multirun 和底图。</div>
+  <div class="step"><b>转向流量</b>我重跑最终 UE。对 4 个进口路段做 select-link，得到各出口流量。用 IPF 配平到进口与出口。电动车 OD 单独加载。模型把进口加载到 V/C 1.2–1.3。转向流量 10,461 veh/h，超过任何配时的通过能力。所以我保留转向结构，总量 × <b>0.44</b>。这使保护左转方案 Y ≈ 0.75。</div>
+  <div class="step"><b>两套信号方案（唯一变量）</b>现状方案：两相位<b>许可左转</b>，周期 90 s，这是行人下限。我核算了许可左转间隙。航天大道西北进口左转饱和度 1.12，东南 0.93。左转只能"抢"间隙。这与碰撞为主的事故结构吻合。改善方案：四相位<b>保护左转</b>。Webster 算得 119 → 120 s。两方案几何、需求完全相同，只换信号程序号。</div>
+  <div class="step"><b>89 个冲突区脚本写入</b>路网有 117 处重叠。我对 89 处写入优先权。第一类是同时放行的冲突，45 处。规则：直行 &gt; 左转 &gt; 渠化右转；转弯让直行电动车。第二类是信号分离但涉及左转的冲突，44 处。许可左转车在路口内等间隙，常在黄灯或全红时清尾。此时横向车已起步。如果冲突区被动，起步车会穿过清尾左转车。路口最主要的碰撞风险就测不到。所以我设<b>清尾左转优先、横向起步让行</b>。间隙：许可左转前间隙 1.0 s，后间隙 2.0 s。加穿越时间约 4 s，接近 HCM 临界间隙 4.1 s。默认值让左转接受过小间隙。后间隙取 3.0 s 时，左转排队明显加重。所以 2.0 是判断值。</div>
+  <div class="step"><b>运行协议</b>每次 600 s。前 120 s 预热，分析 120–600 s。每方案 20 个种子。输出节点评价。轨迹送 SSAM 3，参数 TTC 1.5、PET 5、crossing 85°。两方案以种子为样本做双侧 Mann–Whitney U 检验。它是非参数检验，不假设正态。</div>
+</div>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/vissim_existing.jpg" alt="VISSIM existing" data-cap="VISSIM 5.30 学生版中的现状方案路网（带水印）。"><figcaption><b>图 13-1 VISSIM 路网（现状方案）。</b>斜交四路口。航天大道双幅 + 辅路。学生版有水印。</figcaption></figure>
+<figure class="fig"><img src="img/vissim_improved.jpg" alt="VISSIM improved" data-cap="改善方案（保护左转）路网，几何与需求与现状完全相同，只换信号程序。"><figcaption><b>图 13-2 VISSIM 路网（改善方案）。</b>几何、需求与现状完全相同。唯一变量是信号程序。</figcaption></figure>
+</div>
+<figure class="fig half"><img src="img/vissim_geometry_check.jpg" alt="geometry check" data-cap="脚本生成的 VISSIM 路网叠加 OSM 底图检查图。"><figcaption><b>图 13-3 几何检查。</b>脚本生成的路段叠在 OSM 底图上核对。</figcaption></figure>
+
+<h3 id="v-res">结果</h3>
+<div class="card">
+<h4>先做合理性检验</h4>
+<p>改善方案通过检验。机动车通过量为需求的 96%。12 个转向中 GEH &gt; 5 的为 0。<b>现状方案没有通过</b>。通过量只有 63%。7 个转向 GEH &gt; 5，最大 17.4，在航天大道西北左转。17 辆车等待换道超过 60 s，被移出。约 1/3 需求没进路口。所以比较<b>偏向现状方案</b>。现状的劣势是下限。</p>
+<h4>延误</h4>
+<p>机动车平均延误 <b>62.7 → 38.5 s/veh（−39%，p &lt; 0.001）</b>。同时改善方案多放行 52% 机动车。左转延误从 120–170 s 降到约 50 s。代价是胜利南路东北直行延误略增。</p>
+<h4>冲突</h4>
+<div class="tbl-wrap"><table>
+<tr><th>类型</th><th>现状 / 千辆</th><th>改善 / 千辆</th><th>变化</th><th>p</th></tr>
+<tr><td>交叉 crossing</td><td>15.03</td><td>3.16</td><td><b>−79%</b></td><td>&lt; 0.001</td></tr>
+<tr><td>变道 lane-change</td><td>5.52</td><td>2.70</td><td>−51%</td><td>0.060</td></tr>
+<tr><td>追尾 rear-end</td><td>183.45</td><td>184.74</td><td>+1%</td><td>0.148</td></tr>
+<tr><td>合计</td><td>204.01</td><td>190.59</td><td>−7%</td><td>0.379</td></tr>
+</table></div>
+<p><b>解读</b>：保护左转去掉了该路口的主要事故类型。77 起事故中 42 起是碰撞，对应交叉冲突。每车交叉风险降约 4/5。追尾冲突占九成以上。它随通过量成比例增加，每千辆不变。所以信号相位改变的是冲突的<b>类型</b>，不是排队带来的追尾暴露量。要减追尾需要排队措施：加长左转展宽、排队预警、协调控制。</p>
+</div>
+<div class="figrow">
+<figure class="fig"><img src="img/p9_conflicts.png" alt="conflicts" data-cap="每千辆进入车辆的 SSAM 冲突按类型；小点为种子，大点为均值 + 95% CI。"><figcaption><b>图 13-4 冲突率。</b>交叉冲突降 79%。追尾不变。</figcaption></figure>
+<figure class="fig"><img src="img/p9_delay.png" alt="delay" data-cap="各进口转向的机动车平均延误；点为种子，横线为均值。"><figcaption><b>图 13-5 分转向延误。</b>左转延误从 120–170 s 降到约 50 s。现状方案种子间波动极大，说明过饱和。</figcaption></figure>
+</div>
+<figure class="fig"><img src="img/p9_conflict_map.png" alt="conflict map" data-cap="SSAM 冲突位置（20 种子合并）：左现状右改善。绿色交叉冲突集中在路口中央左转轨迹上。"><figcaption><b>图 13-6 冲突位置。</b>现状（左）：绿色交叉冲突堆在路口中央的左转轨迹上。改善（右）：交叉冲突几乎消失。剩下蓝色追尾沿进口道排队。</figcaption></figure>
+
+<div class="say"><span class="t">英文概述</span>
+<p class="en">"I picked the junction by evidence. It was first by crashes. It was still sixth by EB excess after I controlled for exposure. So the risk sits at the node. I coded the geometry from OSM. I took turning volumes from the demand model with select-link. I built two signal plans. I found that the default gaps let left-turners accept unsafe gaps. So I scripted 89 conflict areas and their priority rules. I added one rule: a clearing left-turn has priority at phase change. I ran twenty seeds per plan and counted conflicts with SSAM. Protected lefts cut crossing conflicts 79 percent and delay 39 percent. They served 96 percent of demand instead of 63 percent. The rear-end rate did not change. I raise one caveat first: the base plan is oversaturated, so its disadvantage is a lower bound. And conflicts are surrogates, not crashes."</p></div>
+
+<div class="note warn"><span class="t">局限</span>
+<ul style="margin:0">
+<li>现状方案过饱和。左转排队溢出 70 m 展宽段，堵住直行，延伸到路网边界。部分车辆进不来。三种补救都没有采用：核实实际展宽、延长进口道、降低需求系数。我只单独报告通过量缺口。</li>
+<li>几何依据 OSM 与影像。流量来自没有用流量计数校准的模型，并统一缩放 0.44。配时是 Webster 计算值。现状两相位许可左转是<b>假设</b>，需要现场核实。学生版不能仿真行人。电动车量和左转后间隙 2.0 s 是判断值。</li>
+<li>SSAM 冲突 ≠ 事故。结论只用于两方案相对比较。</li>
+<li>原计划的左转比例 ±30% 敏感性和 2019 需求情景没有进入正式结果。</li>
+</ul></div>
+</section>
+
+<div class="nav-bottom"><button type="button" id="prevTab">← 上一节</button><button type="button" id="nextTab">下一节 →</button></div>
+</main>
+
+<footer><div class="wrap">
+<p>陆佳蔚 · 上海交通大学 · PRP 项目 T010PRP43015（2023），2026 年重构并完成第二阶段。所有数字来自两份报告中由脚本生成的宏文件；图片来自报告与作品集。</p>
+<p>报告：《西昌市道路交通事故风险》（47 / 44 页）、《西昌市出行需求模型》（44 / 42 页）、合并版（90 / 86 页）、作品集 v2（12 页），中英双版。</p>
+</div></footer>
+
+<div class="lb" id="lightbox" role="dialog" aria-modal="true"><img id="lbImg" alt=""><div class="cap" id="lbCap"></div></div>
+
+<script>
+(function(){
+  var EN = (document.documentElement.lang||'').indexOf('en')===0;
+  var TXT = EN ? {
+    expand:'Expand all', collapse:'Collapse all',
+    bprRef:'Dashed = standard BPR (α 0.15, β 4)',
+    ebHi:'Large weight: EB pulls the observed count back toward the SPF prediction. It corrects for one lucky or unlucky year.',
+    ebMid:'Medium weight: EB partly adjusts the observed count.',
+    ebLo:'Tiny weight: EB ≈ observed, so PSI ≈ observed − predicted (this project, with k ≈ 5, is this case).',
+    clqHi:'> 1: colocation (B is more common near A than citywide)',
+    clqLo:'< 1: isolation (B is less common near A than citywide)',
+    clqMid:'≈ 1: random (the share of B near A matches the city)'
+  } : {
+    expand:'展开全部折叠', collapse:'收起全部折叠',
+    bprRef:'虚线 = 标准 BPR (α 0.15, β 4)',
+    ebHi:'权重较大：EB 明显把观测值向 SPF 预测拉回，纠正了"一年运气"。',
+    ebMid:'权重中等：EB 部分修正观测值。',
+    ebLo:'权重极小：EB ≈ 观测值，PSI ≈ 观测 − 预测（本项目 k ≈ 5 就是这种情形）。',
+    clqHi:'> 1：协同定位（B 在 A 附近比全市更常见）',
+    clqLo:'< 1：隔离（B 在 A 附近比全市更少见）',
+    clqMid:'≈ 1：随机（A 附近 B 的比例和全市一样）'
+  };
+
+  // ---------- language switch: keep the current tab ----------
+  document.querySelectorAll('.lang-switch').forEach(function(a){
+    a.addEventListener('click', function(e){ e.preventDefault(); location.href = a.getAttribute('href') + (location.hash||''); });
+  });
+  // ---------- tabs ----------
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var order = tabs.map(function(t){return t.dataset.tab;});
+  function show(name, push){
+    if(order.indexOf(name) < 0) name = order[0];
+    tabs.forEach(function(t){ t.setAttribute('aria-selected', t.dataset.tab===name ? 'true':'false'); });
+    document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('active', p.id==='tab-'+name); });
+    var active = document.querySelector('.tab[aria-selected="true"]');
+    if(active && active.scrollIntoView) active.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'});
+    if(push!==false){ try{ history.replaceState(null,'','#'+name); }catch(e){} }
+    try{ localStorage.setItem('xc_tab', name); }catch(e){}
+    var i = order.indexOf(name);
+    document.getElementById('prevTab').style.visibility = i>0 ? 'visible':'hidden';
+    document.getElementById('nextTab').style.visibility = i<order.length-1 ? 'visible':'hidden';
+    document.getElementById('prevTab').textContent = i>0 ? '← '+tabs[i-1].textContent.replace(/^\d+/,'').trim() : '';
+    document.getElementById('nextTab').textContent = i<order.length-1 ? tabs[i+1].textContent.replace(/^\d+/,'').trim()+' →' : '';
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.dataset.tab); window.scrollTo({top:document.querySelector('.tabbar-wrap').offsetTop, behavior:'smooth'}); }); });
+  document.getElementById('prevTab').addEventListener('click', function(){ var i=order.indexOf(current()); if(i>0){ show(order[i-1]); window.scrollTo({top:0,behavior:'smooth'}); } });
+  document.getElementById('nextTab').addEventListener('click', function(){ var i=order.indexOf(current()); if(i<order.length-1){ show(order[i+1]); window.scrollTo({top:0,behavior:'smooth'}); } });
+  function current(){ var a=document.querySelector('.tab[aria-selected="true"]'); return a?a.dataset.tab:order[0]; }
+  // cross-tab jumps
+  document.addEventListener('click', function(e){
+    var go = e.target.closest('[data-tab-go]');
+    if(go){ show(go.dataset.tabGo); window.scrollTo({top:0,behavior:'smooth'}); return; }
+    var anchor = e.target.closest('[data-go]');
+    if(anchor){ var el=document.getElementById(anchor.dataset.go); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); return; }
+    var a = e.target.closest('a[href^="#"]');
+    if(a){ var id=a.getAttribute('href').slice(1); var tgt=document.getElementById(id); if(tgt){ e.preventDefault(); var panel=tgt.closest('.panel'); if(panel && !panel.classList.contains('active')) show(panel.id.replace('tab-','')); tgt.scrollIntoView({behavior:'smooth', block:'start'}); } }
+  });
+  var initial = (location.hash||'').slice(1);
+  if(!initial){ try{ initial = localStorage.getItem('xc_tab') || ''; }catch(e){} }
+  show(initial || order[0], false);
+  document.addEventListener('keydown', function(e){
+    if(e.target.matches('input,textarea')) return;
+    if(document.getElementById('lightbox').classList.contains('open')){ if(e.key==='Escape') closeLb(); return; }
+    var i=order.indexOf(current());
+    if(e.key==='ArrowRight' && i<order.length-1){ show(order[i+1]); window.scrollTo({top:0}); }
+    if(e.key==='ArrowLeft' && i>0){ show(order[i-1]); window.scrollTo({top:0}); }
+  });
+
+  // ---------- theme ----------
+  var root=document.documentElement;
+  try{ var saved=localStorage.getItem('xc_theme'); if(saved) root.setAttribute('data-theme', saved); }catch(e){}
+  document.getElementById('themeBtn').addEventListener('click', function(){
+    var dark = root.getAttribute('data-theme')==='dark' || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try{ localStorage.setItem('xc_theme', next); }catch(e){}
+  });
+  document.getElementById('expandBtn').addEventListener('click', function(){
+    var all=document.querySelectorAll('details'); var anyClosed=Array.prototype.some.call(all,function(d){return !d.open;});
+    all.forEach(function(d){ d.open=anyClosed; });
+    document.querySelectorAll('.flash').forEach(function(f){ f.classList.toggle('open', anyClosed); });
+    this.textContent = anyClosed ? TXT.collapse : TXT.expand;
+  });
+
+  // ---------- lightbox ----------
+  var lb=document.getElementById('lightbox'), lbImg=document.getElementById('lbImg'), lbCap=document.getElementById('lbCap');
+  function closeLb(){ lb.classList.remove('open'); lbImg.src=''; }
+  document.addEventListener('click', function(e){
+    var img=e.target.closest('.fig img');
+    if(img){ lbImg.src=img.src; lbImg.alt=img.alt; lbCap.textContent=img.dataset.cap || (img.closest('figure') && img.closest('figure').querySelector('figcaption') ? img.closest('figure').querySelector('figcaption').textContent : ''); lb.classList.add('open'); }
+  });
+  lb.addEventListener('click', closeLb);
+
+  // ---------- flashcards ----------
+  document.addEventListener('click', function(e){ var f=e.target.closest('.flash'); if(f && !e.target.closest('a')) f.classList.toggle('open'); });
+
+  // ---------- BPR widget ----------
+  var cv=document.getElementById('bprCanvas');
+  if(cv){
+    var ctx=cv.getContext('2d');
+    var aR=document.getElementById('bprAlpha'), bR=document.getElementById('bprBeta'), xR=document.getElementById('bprVC');
+    function cssVar(n){ return getComputedStyle(root).getPropertyValue(n).trim(); }
+    function drawBPR(){
+      var a=+aR.value, b=+bR.value, x=+xR.value;
+      document.getElementById('bprA').textContent=a.toFixed(2); document.getElementById('bprB').textContent=b.toFixed(1); document.getElementById('bprX').textContent=x.toFixed(2);
+      var r=1+a*Math.pow(x,b); document.getElementById('bprOut').textContent=r.toFixed(2); document.getElementById('bprMin').textContent=(10*r).toFixed(1);
+      var W=cv.width,H=cv.height,L=46,R=14,T=14,B=34; ctx.clearRect(0,0,W,H);
+      var ymax=4; var ink=cssVar('--ink')||'#222', muted=cssVar('--muted')||'#777', line=cssVar('--line')||'#ddd', acc=cssVar('--accent')||'#2563eb', org=cssVar('--orange')||'#e8632b';
+      ctx.strokeStyle=line; ctx.lineWidth=1; ctx.font='12px sans-serif'; ctx.fillStyle=muted;
+      for(var g=1;g<=ymax;g++){ var yy=T+(H-T-B)*(1-(g-0)/ymax); ctx.beginPath(); ctx.moveTo(L,yy); ctx.lineTo(W-R,yy); ctx.stroke(); ctx.fillText(g.toFixed(1)+'×', 8, yy+4); }
+      for(var v=0;v<=2;v+=0.5){ var xx=L+(W-L-R)*v/2; ctx.beginPath(); ctx.moveTo(xx,T); ctx.lineTo(xx,H-B); ctx.stroke(); ctx.fillText(v.toFixed(1), xx-8, H-B+16); }
+      ctx.fillText('V/C', W-R-22, H-4); ctx.fillText('t/t₀', 8, 10);
+      // reference curve (0.15,4)
+      ctx.strokeStyle=muted; ctx.setLineDash([4,4]); ctx.beginPath();
+      for(var i=0;i<=200;i++){ var vv=i/100; var rr=1+0.15*Math.pow(vv,4); var px=L+(W-L-R)*vv/2, py=T+(H-T-B)*(1-Math.min(rr,ymax)/ymax); if(i===0)ctx.moveTo(px,py); else ctx.lineTo(px,py);} ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle=acc; ctx.lineWidth=2.5; ctx.beginPath();
+      for(var j=0;j<=200;j++){ var v2=j/100; var r2=1+a*Math.pow(v2,b); var px2=L+(W-L-R)*v2/2, py2=T+(H-T-B)*(1-Math.min(r2,ymax)/ymax); if(j===0)ctx.moveTo(px2,py2); else ctx.lineTo(px2,py2);} ctx.stroke();
+      var cx=L+(W-L-R)*x/2, cy=T+(H-T-B)*(1-Math.min(r,ymax)/ymax); ctx.fillStyle=org; ctx.beginPath(); ctx.arc(cx,cy,6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=muted; ctx.fillText(TXT.bprRef, L+6, T+12);
+    }
+    [aR,bR,xR].forEach(function(el){ el.addEventListener('input', drawBPR); });
+    drawBPR();
+    new MutationObserver(drawBPR).observe(root,{attributes:true, attributeFilter:['data-theme']});
+  }
+
+  // ---------- EB widget ----------
+  var ebMuR=document.getElementById('ebMuR');
+  if(ebMuR){
+    var ebNR=document.getElementById('ebNR'), ebKR=document.getElementById('ebKR');
+    function drawEB(){
+      var mu=+ebMuR.value, n=+ebNR.value, k=+ebKR.value;
+      var w=1/(1+k*mu), eb=w*mu+(1-w)*n, psi=eb-mu;
+      document.getElementById('ebMu').textContent=mu; document.getElementById('ebN').textContent=n; document.getElementById('ebK').textContent=k.toFixed(2);
+      document.getElementById('ebW').textContent=w.toFixed(3); document.getElementById('ebEB').textContent=eb.toFixed(1); document.getElementById('ebPSI').textContent=(psi>=0?'+':'')+psi.toFixed(1);
+      var read = w>0.3 ? TXT.ebHi : (w>0.05 ? TXT.ebMid : TXT.ebLo);
+      document.getElementById('ebRead').textContent=read;
+    }
+    [ebMuR,ebNR,ebKR].forEach(function(el){ el.addEventListener('input', drawEB); }); drawEB();
+  }
+
+  // ---------- CLQ widget ----------
+  var clqL=document.getElementById('clqL');
+  if(clqL){
+    var clqG=document.getElementById('clqG');
+    function drawCLQ(){
+      var l=+clqL.value, g=+clqG.value, q=l/g;
+      document.getElementById('clqLocal').textContent=l; document.getElementById('clqGlobal').textContent=g;
+      document.getElementById('clqLv').textContent=l+'%'; document.getElementById('clqGv').textContent=g+'%'; document.getElementById('clqOut').textContent=q.toFixed(2);
+      document.getElementById('clqRead').textContent = q>1.05 ? TXT.clqHi : (q<0.95 ? TXT.clqLo : TXT.clqMid);
+    }
+    [clqL,clqG].forEach(function(el){ el.addEventListener('input', drawCLQ); }); drawCLQ();
+  }
+})();
+</script>
+</body>
+</html>
